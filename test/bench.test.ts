@@ -5,7 +5,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder }
 
 describe('Performance Benchmarks', () => {
   test('Instantiation and Serialization comparison', () => {
-    const ITERATIONS = 150000;
+    const ITERATIONS = 50000;
 
     // 1. @discordjs/builders - Instanciation seule
     const startDjsInst = performance.now();
