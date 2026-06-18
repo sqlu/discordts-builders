@@ -32,6 +32,31 @@ Requirements:
 
 We publish TypeScript source files directly instead of pre-transpiled files.
 
+## Benchmarks
+
+This package is optimized for speed. It runs close to 0ms overhead by using direct manual loops and avoiding heavy validation schemas. 
+
+![Benchmark Graph](./assets/benchmark.svg)
+
+> [!TIP]
+> **Performance Boost:** With over **7.0x performance** (more than 603% faster processing), `@discordts/builders` eliminates instantiation and serialization bottlenecks entirely, running close to 0ms overhead.
+
+Below are the detailed results comparing **50,000 iterations** of component construction and serialization against `@discordjs/builders`.
+
+*Last Benchmarked: June 18, 2026*
+
+| Task | `@discordjs/builders` | `@discordts/builders` | Speed Comparison |
+| :--- | :--- | :--- | :---: |
+| **Instantiation** | ~139.7 ms | **~15.8 ms** | **8.8x faster** |
+| **Serialization** | ~42.0 ms | **~10.1 ms** | **4.2x faster** |
+| **Total** | ~181.7 ms | **~25.9 ms** | **7.0x faster** |
+
+To run the benchmark yourself:
+```bash
+bun run benchmark:ci
+```
+> The SVG and README table are only regenerated automatically by CI on push. Running locally outputs results to the console only.
+
 ## Discord Components Flags
 Discord V2 Components messages must be sent with the `IS_COMPONENTS_V2` message flag:
 ```ts
@@ -168,30 +193,6 @@ for (const warning of warnings) {
 ```
 The auditor checks component limits, duplicate custom IDs, missing fields, and character length overflows.
 
-## Benchmarks
-
-This package is optimized for speed. It runs close to 0ms overhead by using direct manual loops and avoiding heavy validation schemas. 
-
-![Benchmark Graph](./assets/benchmark.svg)
-
-> [!TIP]
-> **Performance Boost:** With over **8.2x performance** (more than 715% faster processing), `@discordts/builders` eliminates instantiation and serialization bottlenecks entirely, running close to 0ms overhead.
-
-Below are the detailed results comparing **50,000 iterations** of component construction and serialization against `@discordjs/builders`.
-
-*Last Benchmarked: June 18, 2026*
-
-| Task | `@discordjs/builders` | `@discordts/builders` | Speed Comparison |
-| :--- | :--- | :--- | :---: |
-| **Instantiation** | ~147.3 ms | **~13.3 ms** | **11.1x faster** |
-| **Serialization** | ~42.2 ms | **~10.0 ms** | **4.2x faster** |
-| **Total** | ~189.5 ms | **~23.3 ms** | **8.2x faster** |
-
-To run the benchmark yourself:
-```bash
-bun run benchmark:ci
-```
-> The SVG and README table are only regenerated automatically by CI on push. Running locally outputs results to the console only.
 ## Development
 Check the type definitions and run tests locally:
 ```bash
