@@ -39,7 +39,7 @@ This package is optimized for speed. It runs close to 0ms overhead by using dire
 ![Benchmark Graph](./assets/benchmark.svg)
 
 > [!TIP]
-> **Performance Boost:** With over **5.9x performance** (more than 486% faster processing), `@discordts/builders` eliminates instantiation and serialization bottlenecks entirely, running close to 0ms overhead.
+> **Performance Boost:** With over **6.7x performance** (more than 572% faster processing), `@discordts/builders` eliminates instantiation and serialization bottlenecks entirely, running close to 0ms overhead.
 
 Below are the detailed results comparing **50,000 iterations** of component construction and serialization against `@discordjs/builders`.
 
@@ -47,9 +47,9 @@ Below are the detailed results comparing **50,000 iterations** of component cons
 
 | Task | `@discordjs/builders` | `@discordts/builders` | Speed Comparison |
 | :--- | :--- | :--- | :---: |
-| **Instantiation** | ~126.2 ms | **~17.8 ms** | **7.1x faster** |
-| **Serialization** | ~39.1 ms | **~10.4 ms** | **3.8x faster** |
-| **Total** | ~165.3 ms | **~28.2 ms** | **5.9x faster** |
+| **Instantiation** | ~169.3 ms | **~21.3 ms** | **7.9x faster** |
+| **Serialization** | ~47.3 ms | **~10.9 ms** | **4.3x faster** |
+| **Total** | ~216.6 ms | **~32.2 ms** | **6.7x faster** |
 
 To run the benchmark yourself:
 ```bash
