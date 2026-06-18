@@ -1,5 +1,5 @@
 import { ComponentType } from '../enums.ts';
-import type { APIActionRowComponent, APIMessageComponent, APITextInputComponent } from '../types.ts';
+import type { APIActionRowComponent, APIComponent, APIMessageComponent, APITextInputComponent } from '../types.ts';
 import type { CheckArrayLength, ValidActionRowComponents } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
@@ -55,7 +55,7 @@ class ActionRowBuilderClass<
     const len = rawComps.length;
     const comps = new Array(len);
     for (let i = 0; i < len; i++) {
-      comps[i] = BaseComponent.resolve!(rawComps[i] as any) as ActionRowComponent;
+      comps[i] = BaseComponent.resolve!(rawComps[i] as APIComponent) as ActionRowComponent;
     }
     const builder = new ActionRowBuilderClass<ActionRowComponent, readonly ActionRowComponent[]>({
       components: comps,
@@ -76,18 +76,15 @@ class ActionRowBuilderClass<
    * Creates a new ActionRowBuilder instance.
    * @param opts - Initial configuration options.
    */
-constructor(opts?: ActionRowOptions<T, Components>) {
+  constructor(opts?: ActionRowOptions<T, Components>) {
     super();
     this.data.type = ComponentType.ActionRow;
-    this.data.components = [];
     if (opts?.components !== undefined) {
       const len = opts.components.length;
       if (len > 5) throw new Error("components size can't exceed 5");
-      const arr = new Array(len);
-      for (let i = 0; i < len; i++) {
-        arr[i] = opts.components[i];
-      }
-      this.data.components = arr;
+      this.data.components = opts.components as unknown as (APIMessageComponent | APITextInputComponent)[];
+    } else {
+      this.data.components = [];
     }
   }
 
@@ -103,11 +100,7 @@ constructor(opts?: ActionRowOptions<T, Components>) {
     const len = components.length;
     if (len > 5)
       throw new Error("components size can't exceed 5");
-    const arr = new Array(len);
-    for (let i = 0; i < len; i++) {
-      arr[i] = components[i];
-    }
-    this.data.components = arr;
+    this.data.components = components as unknown as (APIMessageComponent | APITextInputComponent)[];
     return this as unknown as ActionRowBuilderClass<T, NewComponents>;
   }
 
@@ -126,7 +119,7 @@ constructor(opts?: ActionRowOptions<T, Components>) {
     if (currentLen + addedLen > 5)
       throw new Error("components size can't exceed 5");
     for (let i = 0; i < addedLen; i++) {
-      this.data.components.push(components[i] as any);
+      this.data.components.push(components[i] as unknown as (APIMessageComponent | APITextInputComponent));
     }
     return this as unknown as ActionRowBuilderClass<T, [...Components, ...NewComponents]>;
   }
@@ -147,10 +140,8 @@ constructor(opts?: ActionRowOptions<T, Components>) {
     const len = comps.length;
     const serialized = new Array(len);
     for (let i = 0; i < len; i++) {
-      const c = comps[i] as any;
-      serialized[i] = (c !== null && typeof c === 'object' && typeof c.toJSON === 'function')
-        ? c.toJSON()
-        : c;
+      const c = comps[i] as unknown as ActionRowComponent;
+      serialized[i] = c?.toJSON ? c.toJSON() : c;
     }
     const res: APIActionRowComponent<ReturnType<T['toJSON']>> = {
       type: ComponentType.ActionRow,

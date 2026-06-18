@@ -101,11 +101,23 @@ class CheckboxGroupOptionBuilderClass {
    * @param opts - Initial configuration options.
    */
 constructor(opts: CheckboxGroupOptionOptions<string, string, string>) {
-    if (opts.value !== undefined) this.setValue(opts.value as string);
-    if (opts.label !== undefined) this.setLabel(opts.label as string);
-    if (opts.description !== undefined)
-      this.setDescription(opts.description as string);
-    if (opts.default !== undefined) this.setDefault(opts.default);
+    const val = opts.value as string | undefined;
+    if (val !== undefined) {
+      if (val.length < 1) throw new Error('value needs to be at least 1 character');
+      if (val.length > 100) throw new Error(`value is too long, max is 100 characters but got ${val.length}`);
+      this.data.value = val;
+    }
+    const lbl = opts.label as string | undefined;
+    if (lbl !== undefined) {
+      if (lbl.length > 100) throw new Error(`label is too long, max is 100 characters but got ${lbl.length}`);
+      this.data.label = lbl;
+    }
+    if (opts.description !== undefined) {
+      const d = opts.description as string;
+      if (d.length > 100) throw new Error(`description is too long, max is 100 characters but got ${d.length}`);
+      this.data.description = d;
+    }
+    if (opts.default !== undefined) this.data.default = opts.default;
   }
 
   /**
@@ -389,7 +401,7 @@ constructor(opts: CheckboxGroupOptions<string, CheckboxGroupOptionBuilder[]>) {
    */
   setOptions(options: CheckboxGroupOptionBuilder[]): this {
     this.validateArrayLength(options, 2, 10, 'options');
-    this.data.options = [...options] as unknown as APICheckboxGroupOption[];
+    this.data.options = options as unknown as APICheckboxGroupOption[];
     return this;
   }
 
@@ -401,9 +413,13 @@ constructor(opts: CheckboxGroupOptions<string, CheckboxGroupOptionBuilder[]>) {
    */
   addOptions(...options: CheckboxGroupOptionBuilder[]): this {
     if (!this.data.options) this.data.options = [];
-    if (this.data.options.length + options.length > 10)
+    const cur = this.data.options.length;
+    const add = options.length;
+    if (cur + add > 10)
       throw new Error("options size can't be more than 10");
-    this.data.options.push(...(options as unknown as APICheckboxGroupOption[]));
+    for (let i = 0; i < add; i++) {
+      this.data.options.push(options[i] as unknown as APICheckboxGroupOption);
+    }
     return this;
   }
 
@@ -436,7 +452,7 @@ constructor(opts: CheckboxGroupOptions<string, CheckboxGroupOptionBuilder[]>) {
    */
   override toJSON(): APICheckboxGroupComponent {
     const rawOpts = this.data.options as unknown as readonly { toJSON(): APICheckboxGroupOption }[];
-    const len = rawOpts ? rawOpts.length : 0;
+    const len = rawOpts.length;
     const serializedOpts = new Array<APICheckboxGroupOption>(len);
     for (let i = 0; i < len; i++) serializedOpts[i] = rawOpts[i]!.toJSON();
     const res: APICheckboxGroupComponent = {

@@ -24,7 +24,8 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "typecheck": "bun x tsc --noEmit",
-    "lint": "bun run typecheck"
+    "lint": "bun run typecheck",
+    "benchmark:ci": "bun run scripts/run-benchmark.ts"
   },
   "devDependencies": {
     "@discordjs/builders": "^1.14.1",

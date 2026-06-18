@@ -176,7 +176,7 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
       throw new Error(
         `components must have between 1 and 5 entries, but got ${components.length}`,
       );
-    this.data.components = [...components];
+    this.data.components = components;
     return this;
   }
 
@@ -188,9 +188,13 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
    */
   addComponents(...components: ModalComponent[]): this {
     if (!this.data.components) this.data.components = [];
-    if (this.data.components.length + components.length > 5)
+    const cur = this.data.components.length;
+    const add = components.length;
+    if (cur + add > 5)
       throw new Error("components size can't exceed 5");
-    this.data.components.push(...components);
+    for (let i = 0; i < add; i++) {
+      this.data.components.push(components[i]!);
+    }
     return this;
   }
 
@@ -225,7 +229,7 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
       throw new Error(
         `components must have between 1 and 5 entries, but got ${components.length}`,
       );
-    this.data.components = [...components];
+    this.data.components = components;
     return this;
   }
 
@@ -240,7 +244,7 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
       throw new Error(
         `components must have between 1 and 5 entries, but got ${components.length}`,
       );
-    this.data.components = [...components];
+    this.data.components = components;
     return this;
   }
 
@@ -308,19 +312,20 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
    * Serializes the ModalBuilder builder into a raw Discord API payload structure.
    * @returns The serialized JSON payload structure.
    */
-toJSON(): APIModalStructure {
-    const len = this.components.length;
+  toJSON(): APIModalStructure {
+    const comps = this.data.components;
+    const len = comps ? comps.length : 0;
     if (len < 1 || len > 5) {
       throw new Error(`components must have between 1 and 5 entries, but got ${len}`);
     }
-    const comps = new Array(len);
+    const serializedComps = new Array<APIModalComponent>(len);
     for (let i = 0; i < len; i++) {
-      comps[i] = (this.components[i] as any).toJSON();
+      serializedComps[i] = comps![i]!.toJSON() as APIModalComponent;
     }
     const payload: APIModalStructure = {
       title: this.data.title ?? '',
       custom_id: this.data.custom_id ?? '',
-      components: comps,
+      components: serializedComps,
     };
     BaseComponent.validateTreeLimits(payload);
     return payload;

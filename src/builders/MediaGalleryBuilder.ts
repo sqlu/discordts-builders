@@ -204,9 +204,14 @@ class MediaGalleryBuilderClass extends BaseComponent<Partial<APIMediaGalleryComp
   constructor(opts: MediaGalleryOptions<MediaGalleryItemBuilderClass[]>) {
     super();
     this.data.type = ComponentType.MediaGallery;
-    this.data.items = [];
-    if (opts.items !== undefined)
-      this.addItems(...(opts.items as MediaGalleryItemBuilder[]));
+    const items = opts.items;
+    if (!items || items.length === 0) {
+      this.data.items = [];
+    } else {
+      const len = items.length;
+      if (len > 10) throw new Error("items size can't be more than 10");
+      this.data.items = items as unknown as APIMediaGalleryItem[];
+    }
   }
 
   /**
@@ -218,9 +223,13 @@ class MediaGalleryBuilderClass extends BaseComponent<Partial<APIMediaGalleryComp
    */
   addItems(...items: MediaGalleryItemBuilder[]): this {
     if (!this.data.items) this.data.items = [];
-    if (this.data.items.length + items.length > 10)
+    const cur = this.data.items.length;
+    const add = items.length;
+    if (cur + add > 10)
       throw new Error("items size can't be more than 10");
-    this.data.items.push(...(items as unknown as APIMediaGalleryItem[]));
+    for (let i = 0; i < add; i++) {
+      this.data.items.push(items[i] as unknown as APIMediaGalleryItem);
+    }
     return this;
   }
 

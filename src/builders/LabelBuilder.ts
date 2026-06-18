@@ -294,8 +294,8 @@ constructor(opts: LabelOptions<string, LabelComponentBuilder, string>) {
    * @returns The JSON representation.
    */
   override toJSON(): APILabelComponent {
-    const comp = (this.data as Record<string, unknown>).component as { toJSON?: () => unknown } | null;
-    const component = comp && typeof comp.toJSON === 'function' ? comp.toJSON() : comp;
+    const comp = (this.data as Record<string, unknown>).component as LabelComponentBuilder | undefined;
+    const component = comp?.toJSON ? comp.toJSON() : comp;
     if (component && typeof component === 'object')
       this.validateModalComponent(component as Record<string, unknown>);
     const res: APILabelComponent = {

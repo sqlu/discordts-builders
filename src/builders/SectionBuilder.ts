@@ -82,8 +82,13 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
   constructor(opts: SectionOptions<TextDisplayBuilder[]>) {
     super();
     this.data.type = ComponentType.Section;
-    this.data.components = [];
-    if (opts.components !== undefined) this.addTextDisplayComponents(...(opts.components as TextDisplayBuilder[]));
+    if (opts.components !== undefined) {
+      const len = opts.components.length;
+      if (len > 3) throw new Error("can't have more than 3 components here");
+      this.data.components = opts.components as unknown as APITextDisplayComponent[];
+    } else {
+      this.data.components = [];
+    }
     if (opts.accessory !== undefined) this.setAccessory(opts.accessory);
   }
 
@@ -96,9 +101,13 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
    */
   addTextDisplayComponents(...components: TextDisplayBuilder[]): this {
     if (!this.data.components) this.data.components = [];
-    if (this.data.components.length + components.length > 3)
+    const cur = this.data.components.length;
+    const add = components.length;
+    if (cur + add > 3)
       throw new Error("can't have more than 3 components here");
-    this.data.components.push(...(components as unknown as APITextDisplayComponent[]));
+    for (let i = 0; i < add; i++) {
+      this.data.components.push(components[i] as unknown as APITextDisplayComponent);
+    }
     return this;
   }
 
@@ -171,17 +180,16 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
     const len = comps.length;
     const serialized = new Array(len);
     for (let i = 0; i < len; i++) {
-      const c = comps[i] as any;
-      serialized[i] = c.toJSON();
+      serialized[i] = (comps[i] as TextDisplayBuilder).toJSON();
     }
     const res: Record<string, unknown> = {
       type: ComponentType.Section,
       components: serialized,
     };
     if (this.id !== undefined) res.id = this.id;
-    const acc = this.data.accessory as { toJSON?: () => unknown } | undefined;
+    const acc = this.data.accessory as SectionAccessory | undefined;
     if (acc !== undefined)
-      res.accessory = typeof acc.toJSON === 'function' ? acc.toJSON() : acc;
+      res.accessory = acc.toJSON();
     return res;
   }
 }

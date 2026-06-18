@@ -1,5 +1,5 @@
 import { ComponentType, ButtonStyle } from '../enums.ts';
-import type { APIComponent } from '../types.ts';
+import type { APIComponent, JSONifiable } from '../types.ts';
 
 /**
  * Base component class for all builders.
@@ -170,8 +170,8 @@ export abstract class BaseComponent<
       // skip empty check
       if (!c) return;
 
-      const payload = (typeof c === 'object' && c !== null && typeof (c as any).toJSON === 'function')
-        ? (c as any).toJSON()
+      const payload = (typeof c === 'object' && c !== null && typeof (c as JSONifiable).toJSON === 'function')
+        ? (c as JSONifiable).toJSON() as Record<string, unknown>
         : (c as Record<string, unknown>);
 
       if (typeof payload.type === 'number') count++;

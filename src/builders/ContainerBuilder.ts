@@ -112,8 +112,9 @@ class ContainerBuilderClass extends BaseComponent<Partial<APIContainerComponent>
     if (col !== undefined) this.setAccentColor(col);
     if (opts.spoiler !== undefined) this.setSpoiler(opts.spoiler);
     if (opts.components !== undefined) {
-      for (const comp of opts.components)
-        this.addComponents(comp as ContainerComponent);
+      const len = opts.components.length;
+      if (len > 10) throw new Error("components size can't exceed 10");
+      this.data.components = opts.components as unknown as APIContainerComponentChild[];
     }
   }
 
@@ -166,9 +167,13 @@ class ContainerBuilderClass extends BaseComponent<Partial<APIContainerComponent>
    */
   addComponents(...components: ContainerComponent[]): this {
     if (!this.data.components) this.data.components = [];
-    if (this.data.components.length + components.length > 10)
+    const cur = this.data.components.length;
+    const add = components.length;
+    if (cur + add > 10)
       throw new Error("components size can't exceed 10");
-    this.data.components.push(...(components as unknown as APIContainerComponentChild[]));
+    for (let i = 0; i < add; i++) {
+      this.data.components.push(components[i] as unknown as APIContainerComponentChild);
+    }
     return this;
   }
 
@@ -262,10 +267,8 @@ class ContainerBuilderClass extends BaseComponent<Partial<APIContainerComponent>
     const len = comps.length;
     const serialized = new Array(len);
     for (let i = 0; i < len; i++) {
-      const c = comps[i] as any;
-      serialized[i] = (c && typeof c === 'object' && 'toJSON' in c && typeof c.toJSON === 'function')
-        ? c.toJSON()
-        : c;
+      const c = comps[i] as ContainerComponent;
+      serialized[i] = c.toJSON();
     }
     const res: APIContainerComponent = {
       type: ComponentType.Container,

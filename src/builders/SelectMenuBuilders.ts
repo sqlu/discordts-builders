@@ -16,6 +16,13 @@ import type {
 } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+// Pre-computed constant: avoids allocating a new array on every validateDefaultValues call
+const STD_DEFAULT_VALUE_TYPES = new Set<string>([
+  SelectMenuDefaultValueType.User,
+  SelectMenuDefaultValueType.Role,
+  SelectMenuDefaultValueType.Channel,
+]);
+
 interface APIBaseSelectMenuComponent {
   type: ComponentType;
   custom_id: string;
@@ -104,21 +111,17 @@ abstract class BaseSelectMenuBuilderClass<
     max: number | undefined,
   ): void {
     if (!vals || vals.length === 0) return;
-    if (vals.length > 25) throw new Error("can't have more than 25 default values");
     const count = vals.length;
+    if (count > 25) throw new Error("can't have more than 25 default values");
     if (min !== undefined && count < min) {
       throw new Error(`default_values count (${count}) is less than minValues (${min})`);
     }
     if (max !== undefined && count > max) {
       throw new Error(`default_values count (${count}) exceeds maxValues (${max})`);
     }
-    for (const v of vals) {
-      const isStd = ([
-        SelectMenuDefaultValueType.User,
-        SelectMenuDefaultValueType.Role,
-        SelectMenuDefaultValueType.Channel,
-      ] as string[]).includes(v.type);
-      if (isStd && !allowed.includes(v.type))
+    for (let i = 0; i < count; i++) {
+      const v = vals[i]!;
+      if (STD_DEFAULT_VALUE_TYPES.has(v.type) && !allowed.includes(v.type))
         throw new Error(`default type "${v.type}" is invalid, must be one of: ${allowed.join(', ')}`);
     }
   }
@@ -135,12 +138,13 @@ abstract class BaseSelectMenuBuilderClass<
     this.validateSelectMenuValues(min, max, required);
     if (placeholder !== undefined) this.validateLength(placeholder, 150, 'placeholder');
 
-    (this.data as Record<string, unknown>).custom_id = cid;
-    if (placeholder !== undefined) (this.data as Record<string, unknown>).placeholder = placeholder;
-    if (min !== undefined) (this.data as Record<string, unknown>).min_values = min;
-    if (max !== undefined) (this.data as Record<string, unknown>).max_values = max;
-    if (required !== undefined) (this.data as Record<string, unknown>).required = required;
-    if (disabled !== undefined) (this.data as Record<string, unknown>).disabled = disabled;
+    const d = this.data as Record<string, unknown>;
+    d.custom_id = cid;
+    if (placeholder !== undefined) d.placeholder = placeholder;
+    if (min !== undefined) d.min_values = min;
+    if (max !== undefined) d.max_values = max;
+    if (required !== undefined) d.required = required;
+    if (disabled !== undefined) d.disabled = disabled;
   }
 
       /**
@@ -294,12 +298,25 @@ class StringSelectMenuOptionBuilderClass {
    */
 constructor(opts?: TypeSafeSelectMenuOption<string, string, string>) {
     if (!opts) return;
-    if (opts.label !== undefined) this.setLabel(opts.label as string);
-    if (opts.value !== undefined) this.setValue(opts.value as string);
-    if (opts.description !== undefined)
-      this.setDescription(opts.description as string);
-    if (opts.emoji !== undefined) this.setEmoji(opts.emoji);
-    if (opts.default !== undefined) this.setDefault(opts.default);
+    
+    const lbl = opts.label as string | undefined;
+    if (lbl !== undefined) {
+      if (lbl.length > 100) throw new Error(`label is too long, max is 100 characters but got ${lbl.length}`);
+      this.data.label = lbl;
+    }
+    const val = opts.value as string | undefined;
+    if (val !== undefined) {
+      if (val.length < 1) throw new Error('value needs to be at least 1 character');
+      if (val.length > 100) throw new Error(`value is too long, max is 100 characters but got ${val.length}`);
+      this.data.value = val;
+    }
+    if (opts.description !== undefined) {
+      const d = opts.description as string;
+      if (d.length > 100) throw new Error(`description is too long, max is 100 characters but got ${d.length}`);
+      this.data.description = d;
+    }
+    if (opts.emoji !== undefined) this.data.emoji = opts.emoji;
+    if (opts.default !== undefined) this.data.default = opts.default;
   }
 
   /**
@@ -531,7 +548,7 @@ constructor(
     options: (TypeSafeSelectMenuOption | StringSelectMenuOptionBuilder)[],
   ): this {
     this.validateArrayLength(options, 1, 25, 'options');
-    this.data.options = [...options] as unknown as APISelectMenuOption[];
+    this.data.options = options as unknown as APISelectMenuOption[];
     return this;
   }
 
@@ -545,9 +562,13 @@ constructor(
     ...options: (TypeSafeSelectMenuOption | StringSelectMenuOptionBuilder)[]
   ): this {
     if (!this.data.options) this.data.options = [];
-    if (this.data.options.length + options.length > 25)
+    const cur = this.data.options.length;
+    const add = options.length;
+    if (cur + add > 25)
       throw new Error("options size can't be more than 25");
-    this.data.options.push(...(options as unknown as APISelectMenuOption[]));
+    for (let i = 0; i < add; i++) {
+      this.data.options.push(options[i] as unknown as APISelectMenuOption);
+    }
     return this;
   }
 
@@ -570,21 +591,14 @@ constructor(
     return this;
   }
 
-      /**
-   * Serializes the StringSelectMenuBuilder builder into a raw Discord API payload structure.
-   * @returns The serialized JSON payload structure.
-   */
-override toJSON(): APIStringSelectComponent {
+  override toJSON(): APIStringSelectComponent {
     // manual loop, faster than .map for options
     const rawOpts = this.data.options as unknown as readonly (TypeSafeSelectMenuOption | StringSelectMenuOptionBuilder)[];
-    const len = rawOpts ? rawOpts.length : 0;
+    const len = rawOpts.length;
     const serializedOpts = new Array<APISelectMenuOption>(len);
     for (let i = 0; i < len; i++) {
-      const o = rawOpts[i];
-      // builder or raw object
-      serializedOpts[i] = typeof (o as { toJSON?: unknown }).toJSON === 'function'
-        ? (o as { toJSON(): APISelectMenuOption }).toJSON()
-        : o as unknown as APISelectMenuOption;
+      const o = rawOpts[i] as unknown as { toJSON?: () => APISelectMenuOption };
+      serializedOpts[i] = o.toJSON ? o.toJSON() : o as unknown as APISelectMenuOption;
     }
     const res: APIStringSelectComponent = {
       type: ComponentType.StringSelect,
@@ -701,18 +715,21 @@ override setMaxValues(max: number): this {
   protected addDefaultValuesRaw(
     entries: APISelectMenuDefaultValue[],
   ): void {
-    if (!(this.data as Record<string, unknown>).default_values) (this.data as Record<string, unknown>).default_values = [];
-    const newDefaults = [
-      ...((this.data as Record<string, unknown>).default_values as APISelectMenuDefaultValue[]),
-      ...entries,
-    ];
+    const d = this.data as Record<string, unknown>;
+    if (!d.default_values) d.default_values = [];
+    const existing = d.default_values as APISelectMenuDefaultValue[];
+    const eLen = existing.length;
+    const aLen = entries.length;
+    const newDefaults = new Array<APISelectMenuDefaultValue>(eLen + aLen);
+    for (let i = 0; i < eLen; i++) newDefaults[i] = existing[i]!;
+    for (let i = 0; i < aLen; i++) newDefaults[eLen + i] = entries[i]!;
     this.validateDefaultValues(
       newDefaults,
       this.allowedDefaultTypes,
       this.data.min_values,
       this.data.max_values,
     );
-    (this.data as Record<string, unknown>).default_values = newDefaults;
+    d.default_values = newDefaults;
   }
 
   protected buildJSON(type: number): Record<string, unknown> {

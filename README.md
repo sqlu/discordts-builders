@@ -170,21 +170,28 @@ The auditor checks component limits, duplicate custom IDs, missing fields, and c
 
 ## Benchmarks
 
-This package is optimized for speed. It runs close to 0ms overhead by using direct manual loops and avoiding heavy validation schemas. Below are the results comparing **50,000 iterations** of component construction and serialization against `@discordjs/builders`.
+This package is optimized for speed. It runs close to 0ms overhead by using direct manual loops and avoiding heavy validation schemas. 
+
+![Benchmark Graph](./assets/benchmark.svg)
+
+> [!TIP]
+> **Performance Boost:** With over **8.2x performance** (more than 715% faster processing), `@discordts/builders` eliminates instantiation and serialization bottlenecks entirely, running close to 0ms overhead.
+
+Below are the detailed results comparing **50,000 iterations** of component construction and serialization against `@discordjs/builders`.
 
 *Last Benchmarked: June 18, 2026*
 
 | Task | `@discordjs/builders` | `@discordts/builders` | Speed Comparison |
 | :--- | :--- | :--- | :---: |
-| **Instantiation** | ~182 ms | **~36 ms** | **5.1x faster** |
-| **Serialization** | ~52 ms | **~16 ms** | **3.2x faster** |
-| **Total** | ~234 ms | **~52 ms** | **4.5x faster** |
+| **Instantiation** | ~147.3 ms | **~13.3 ms** | **11.1x faster** |
+| **Serialization** | ~42.2 ms | **~10.0 ms** | **4.2x faster** |
+| **Total** | ~189.5 ms | **~23.3 ms** | **8.2x faster** |
 
 To run the benchmark yourself:
 ```bash
-bun test/bench.ts
+bun run benchmark:ci
 ```
-
+> The SVG and README table are only regenerated automatically by CI on push. Running locally outputs results to the console only.
 ## Development
 Check the type definitions and run tests locally:
 ```bash
