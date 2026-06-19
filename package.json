@@ -41,10 +41,10 @@
   "engines": {
     "bun": ">=1.1.0"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sqlu/buncord-builders.git"
   },
-  "repository": "https://github.com/sqlu/buncord-builders",
   "files": [
     "src"
   ]
