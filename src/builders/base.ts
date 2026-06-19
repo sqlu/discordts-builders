@@ -1,6 +1,8 @@
 import { ComponentType, ButtonStyle } from '../enums.ts';
 import type { APIComponent, JSONifiable } from '../types.ts';
 
+const AUDIT_TEXT_FIELDS = ['content', 'label', 'description', 'placeholder', 'value', 'title'] as const;
+
 /**
  * Base component class for all builders.
  * Manages the component type, optional database/Discord ID, and payload serialization.
@@ -29,7 +31,11 @@ export abstract class BaseComponent<
   /**
    * The raw API payload object containing all data properties.
    */
-  public readonly data: TData = {} as TData;
+  public readonly data: TData;
+
+  constructor(data?: TData) {
+    this.data = data ?? ({} as TData);
+  }
 
   /**
    * Sets the database/Discord ID for this component.
@@ -135,8 +141,8 @@ export abstract class BaseComponent<
    * @throws Error if URL is not http/https.
    */
   protected validateHttpUrl(url: string, name: string): void {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      throw new Error(`${name} must be a valid http or https URL, got "${url}"`);
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('discord://')) {
+      throw new Error(`${name} must be a valid http, https, or discord URL, got "${url}"`);
     }
   }
 
@@ -232,7 +238,6 @@ export abstract class BaseComponent<
       throw new Error(`total text is too long, max 4000 characters but got ${textLen}`);
     }
   }
-
   /**
 * Audits a component tree structure and returns a list of warnings or errors for any Discord limit violations.
 * Does not throw; returns a list of warning strings or issue objects.
@@ -268,7 +273,7 @@ export abstract class BaseComponent<
     const issues: AuditIssue[] = [];
     let count = 0;
     let textLen = 0;
-    const fields = ['content', 'label', 'description', 'placeholder', 'value', 'title'] as const;
+    const fields = AUDIT_TEXT_FIELDS;
     const customIds = new Set<string>();
 
     function report(

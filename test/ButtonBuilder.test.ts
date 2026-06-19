@@ -47,6 +47,15 @@ describe('ButtonBuilder', () => {
       expect(btn.toJSON().emoji).toEqual({ name: '🔥' });
     });
 
+    it('throws if regular button has no label or emoji', () => {
+      expect(() =>
+        new ButtonBuilder({
+          customId: 'x',
+          style: ButtonStyle.Primary,
+        } as never),
+      ).toThrow('label or emoji');
+    });
+
     it('setDisabled works', () => {
       const btn = new ButtonBuilder({
         customId: 'x',
@@ -69,6 +78,17 @@ describe('ButtonBuilder', () => {
       expect(json.custom_id).toBeUndefined();
     });
 
+    it('creates a link button with discord:// protocol link', () => {
+      const btn = new ButtonBuilder({
+        style: ButtonStyle.Link,
+        url: 'discord://-/users/123456789012345678',
+        label: 'Open Profile',
+      });
+      const json = btn.toJSON();
+      expect(json.url).toBe('discord://-/users/123456789012345678');
+      expect(json.custom_id).toBeUndefined();
+    });
+
     it('throws if url is missing on link button', () => {
       expect(() =>
         new ButtonBuilder({
@@ -78,14 +98,15 @@ describe('ButtonBuilder', () => {
       ).toThrow('requires a url');
     });
 
-    it('throws if url is not http/https', () => {
+    it('throws if url is not http/https/discord', () => {
       expect(() =>
+        // @ts-expect-error
         new ButtonBuilder({
           style: ButtonStyle.Link,
           url: 'ftp://bad.url',
           label: 'FTP',
         }),
-      ).toThrow('http or https URL');
+      ).toThrow('http, https, or discord');
     });
 
     it('throws if link button has no label or emoji', () => {

@@ -1,15 +1,28 @@
 import { ComponentType } from '../enums.ts';
 import type { APICheckboxComponent } from '../types.ts';
-import type { WithId } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
-export interface BaseCheckboxOptions {
+import type {
+  ExtractCustomId,
+  GetCustomIdField,
+  CheckStringConstraints,
+} from '../utils/guards.ts';
+
+export interface CheckboxOptions<CustomId extends string = string> {
   /** Whether the checkbox is checked by default when the modal opens. */
   default?: boolean;
+  customId?: CustomId;
+  custom_id?: CustomId;
 }
 
-export type CheckboxOptions<CustomId extends string = string> =
-  WithId<CustomId> & BaseCheckboxOptions;
+export type ValidateCheckboxOptions<Opts> =
+  CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : Opts extends { customId: string; custom_id: string }
+  ? { readonly error: 'Cannot specify both customId and custom_id' }
+  : Opts extends { customId: string } | { custom_id: string }
+  ? unknown
+  : { readonly error: 'Checkbox requires a customId or custom_id property' };
 
 export interface CheckboxBuilderInstance<CustomId extends string>
   extends CheckboxBuilderClass {
@@ -125,9 +138,12 @@ class CheckboxBuilderClass extends BaseComponent<Partial<APICheckboxComponent>> 
 }
 
 export const CheckboxBuilder = CheckboxBuilderClass as unknown as {
-  new <CustomId extends string = string>(
-    opts: CheckboxOptions<CustomId>,
-  ): CheckboxBuilderInstance<CustomId>;
+  new <
+    CustomId extends string = string,
+    Opts extends CheckboxOptions<CustomId> = CheckboxOptions<CustomId>,
+  >(
+    opts: Opts & ValidateCheckboxOptions<Opts>,
+  ): CheckboxBuilderInstance<ExtractCustomId<Opts>>;
   from(data: APICheckboxComponent): CheckboxBuilder;
 };
 

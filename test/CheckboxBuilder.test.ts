@@ -49,6 +49,7 @@ describe('CheckboxGroupBuilder', () => {
 
   it('throws if options array is empty', () => {
     expect(() =>
+      // @ts-expect-error
       new CheckboxGroupBuilder({
         customId: 'x',
         options: [] as never,
@@ -61,6 +62,7 @@ describe('CheckboxGroupBuilder', () => {
       new CheckboxGroupOptionBuilder({ value: `v${i}`, label: `L${i}` }),
     );
     expect(() =>
+      // @ts-expect-error
       new CheckboxGroupBuilder({
         customId: 'x',
         options: opts as never,

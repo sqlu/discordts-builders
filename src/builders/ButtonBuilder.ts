@@ -1,52 +1,74 @@
 import { ButtonStyle, ComponentType } from '../enums.ts';
 import type { APIMessageComponentEmoji, APIButtonComponent } from '../types.ts';
-import type { CheckMaxLength, WithId } from '../utils/guards.ts';
+import type {
+  CheckMaxLength,
+  CheckMinLength,
+  CheckUrl,
+  WithId,
+  GetLabel,
+  GetUrl,
+  GetCustomIdField,
+  CheckStringConstraints,
+  CheckUrlConstraints,
+} from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
-type RegularButtonOptions<
-  CustomId extends string,
-  Label extends string,
-> = WithId<CustomId> & {
-  style: Exclude<ButtonStyle, ButtonStyle.Link | ButtonStyle.Premium>;
-  label?: Label & CheckMaxLength<Label, 80, 'Label'>;
-  emoji?: APIMessageComponentEmoji;
-  disabled?: boolean;
-  url?: never;
-  skuId?: never;
-  sku_id?: never;
-};
-
-type LinkButtonOptions<Label extends string> = {
-  style: ButtonStyle.Link;
-  url: string;
-  label?: Label & CheckMaxLength<Label, 80, 'Label'>;
-  emoji?: APIMessageComponentEmoji;
-  disabled?: boolean;
-  customId?: never;
-  custom_id?: never;
-  skuId?: never;
-  sku_id?: never;
-};
-
-type PremiumButtonOptions = {
-  style: ButtonStyle.Premium;
-  skuId?: string;
-  sku_id?: string;
-  disabled?: boolean;
-  label?: never;
-  emoji?: never;
-  customId?: never;
-  custom_id?: never;
-  url?: never;
-};
-
-export type AllButtonOptions<
+export interface ButtonOptions<
   CustomId extends string = string,
   Label extends string = string,
-> =
-  | RegularButtonOptions<CustomId, Label>
-  | LinkButtonOptions<Label>
-  | PremiumButtonOptions;
+  Url extends string = string,
+> {
+  style?: ButtonStyle;
+  label?: Label;
+  emoji?: APIMessageComponentEmoji;
+  disabled?: boolean;
+  url?: Url;
+  skuId?: string;
+  sku_id?: string;
+  customId?: CustomId;
+  custom_id?: CustomId;
+}
+
+export type ValidateButtonOptions<Opts> =
+  CheckStringConstraints<GetLabel<Opts>, 1, 80, 'Label'> extends { readonly error: string }
+  ? CheckStringConstraints<GetLabel<Opts>, 1, 80, 'Label'>
+  : CheckUrlConstraints<GetUrl<Opts>, 512, 'url'> extends { readonly error: string }
+  ? CheckUrlConstraints<GetUrl<Opts>, 512, 'url'>
+  : CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : Opts extends { style: ButtonStyle.Link }
+  ? (Opts extends { customId: any } | { custom_id: any }
+      ? { readonly error: 'Link button must not have a customId or custom_id property' }
+      : Opts extends { skuId: any } | { sku_id: any }
+      ? { readonly error: 'Link button must not have a skuId or sku_id property' }
+      : Opts extends { url: string }
+      ? (Opts extends { label: string } | { emoji: any }
+          ? unknown
+          : { readonly error: 'Link button must have a label or emoji' })
+      : { readonly error: 'Link button requires a url' })
+  : Opts extends { style: ButtonStyle.Premium }
+  ? (Opts extends { customId: any } | { custom_id: any }
+      ? { readonly error: 'Premium button must not have a customId or custom_id property' }
+      : Opts extends { url: any }
+      ? { readonly error: 'Premium button must not have a url property' }
+      : Opts extends { label: any }
+      ? { readonly error: 'Premium button must not have a label property' }
+      : Opts extends { emoji: any }
+      ? { readonly error: 'Premium button must not have an emoji property' }
+      : Opts extends { skuId: string } | { sku_id: string }
+      ? unknown
+      : { readonly error: 'Premium button requires a skuId or sku_id' })
+  : (Opts extends { url: any }
+      ? { readonly error: 'Regular button must not have a url property' }
+      : Opts extends { skuId: any } | { sku_id: any }
+      ? { readonly error: 'Regular button must not have a skuId or sku_id property' }
+      : Opts extends { customId: string } | { custom_id: string }
+      ? (Opts extends { customId: string; custom_id: string }
+          ? { readonly error: 'Cannot specify both customId and custom_id' }
+          : Opts extends { label: string } | { emoji: any }
+          ? unknown
+          : { readonly error: 'Regular button must have a label or emoji' })
+      : { readonly error: 'Regular button requires a customId or custom_id property' });
 
 export interface ButtonBuilderInstance<CustomId extends string>
   extends ButtonBuilderClass {
@@ -82,7 +104,7 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
       const opts: Record<string, unknown> = { style: ButtonStyle.Link, url: raw.url };
       if (raw.label !== undefined) opts.label = raw.label;
       if (raw.emoji !== undefined) opts.emoji = raw.emoji;
-      const builder = new ButtonBuilderClass(opts as unknown as AllButtonOptions);
+      const builder = new ButtonBuilderClass(opts as unknown as ButtonOptions);
       if (raw.disabled !== undefined) builder.setDisabled(raw.disabled);
       if (raw.id !== undefined) builder.setId(raw.id);
       return builder;
@@ -92,18 +114,19 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
       const builder = new ButtonBuilderClass({
         style: ButtonStyle.Premium,
         skuId: raw.sku_id,
-      } as unknown as AllButtonOptions);
+      } as unknown as ButtonOptions);
       if (raw.disabled !== undefined) builder.setDisabled(raw.disabled);
       if (raw.id !== undefined) builder.setId(raw.id);
       return builder;
     }
 
-    const builder = new ButtonBuilderClass({
+    const opts: Record<string, unknown> = {
       style: raw.style ?? ButtonStyle.Primary,
       customId: raw.custom_id,
-    } as unknown as AllButtonOptions);
-    if (raw.label !== undefined) builder.setLabel(raw.label);
-    if (raw.emoji !== undefined) builder.setEmoji(raw.emoji);
+    };
+    if (raw.label !== undefined) opts.label = raw.label;
+    if (raw.emoji !== undefined) opts.emoji = raw.emoji;
+    const builder = new ButtonBuilderClass(opts as unknown as ButtonOptions);
     if (raw.disabled !== undefined) builder.setDisabled(raw.disabled);
     if (raw.id !== undefined) builder.setId(raw.id);
     return builder;
@@ -172,46 +195,57 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
     return this.data.disabled;
   }
 
-      /**
+  /**
    * Creates a new ButtonBuilder instance.
    * @param opts - Initial configuration options.
    */
-constructor(opts: AllButtonOptions<string, string>) {
-    super();
-    this.data.type = ComponentType.Button;
-
+  constructor(opts: ButtonOptions<string, string, string>) {
     const s = opts.style;
-    if (s !== undefined) {
-      this.data.style = s;
-    }
-    if (opts.label !== undefined) {
-      const lbl = opts.label as string;
+    const label = opts.label;
+    const emoji = opts.emoji;
+    const disabled = opts.disabled;
+    let custom_id: string | undefined;
+    let url: string | undefined;
+    let sku_id: string | undefined;
+
+    if (label !== undefined) {
+      const lbl = label as string;
       if (lbl.length > 80) throw new Error(`label is too long, max is 80 characters but got ${lbl.length}`);
-      this.data.label = lbl;
     }
-    if (opts.emoji !== undefined) this.data.emoji = opts.emoji;
-    if (opts.disabled !== undefined) this.data.disabled = opts.disabled;
 
     if (s === ButtonStyle.Link) {
-      const url = (opts as LinkButtonOptions<string>).url;
+      url = opts.url;
       if (!url) throw new Error('Link button requires a url');
       if (url.length > 512) throw new Error(`url is too long, max is 512 characters but got ${url.length}`);
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        throw new Error(`url must be a valid http or https URL, got "${url}"`);
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('discord://')) {
+        throw new Error(`url must be a valid http, https, or discord URL, got "${url}"`);
       }
-      this.data.url = url;
-      if (!opts.label && !opts.emoji)
+      if (!label && !emoji)
         throw new Error('Link button must have a label or emoji');
     } else if (s === ButtonStyle.Premium) {
-      const sku = (opts as PremiumButtonOptions).skuId ?? (opts as PremiumButtonOptions).sku_id;
-      if (!sku) throw new Error('Premium button requires a skuId');
-      this.data.sku_id = sku;
+      sku_id = opts.skuId ?? opts.sku_id;
+      if (!sku_id) throw new Error('Premium button requires a skuId');
     } else {
-      const cid = (opts as RegularButtonOptions<string, string>).customId ?? (opts as RegularButtonOptions<string, string>).custom_id;
-      if (!cid) throw new Error('Regular button requires a customId');
-      if (cid.length < 1 || cid.length > 100) throw new Error(`customId is invalid, must be between 1 and 100 characters`);
-      this.data.custom_id = cid as string;
+      custom_id = opts.customId ?? opts.custom_id;
+      if (!custom_id) throw new Error('Regular button requires a customId');
+      if (custom_id.length < 1 || custom_id.length > 100) throw new Error(`customId is invalid, must be between 1 and 100 characters`);
+      if (!label && !emoji) {
+        throw new Error('Regular button must have a label or emoji');
+      }
     }
+
+    const payload: Partial<APIButtonComponent> = {
+      type: ComponentType.Button,
+    };
+    if (s !== undefined) payload.style = s;
+    if (label !== undefined) payload.label = label;
+    if (emoji !== undefined) payload.emoji = emoji;
+    if (disabled !== undefined) payload.disabled = disabled;
+    if (custom_id !== undefined) payload.custom_id = custom_id;
+    if (url !== undefined) payload.url = url;
+    if (sku_id !== undefined) payload.sku_id = sku_id;
+
+    super(payload);
   }
 
   /**
@@ -310,46 +344,32 @@ constructor(opts: AllButtonOptions<string, string>) {
    */
   override toJSON(): APIButtonComponent {
     const data = this.data;
-    const style = data.style ?? ButtonStyle.Primary;
     const res: APIButtonComponent = {
       type: ComponentType.Button,
-      style,
+      style: data.style ?? ButtonStyle.Primary,
     };
-    const id = this.id;
-    if (id !== undefined) res.id = id;
-    const label = data.label;
-    if (label !== undefined) res.label = label;
-    const emoji = data.emoji;
-    if (emoji !== undefined) res.emoji = emoji;
-    const disabled = data.disabled;
-    if (disabled !== undefined) res.disabled = disabled;
-
-    if (style === ButtonStyle.Link) {
-      const url = data.url;
-      if (url !== undefined) res.url = url;
-    } else if (style === ButtonStyle.Premium) {
-      const sku_id = data.sku_id;
-      if (sku_id !== undefined) res.sku_id = sku_id;
-    } else {
-      const custom_id = data.custom_id;
-      if (custom_id !== undefined) res.custom_id = custom_id;
-    }
+    if (this.id !== undefined) res.id = this.id;
+    if (data.label !== undefined) res.label = data.label;
+    if (data.emoji !== undefined) res.emoji = data.emoji;
+    if (data.disabled !== undefined) res.disabled = data.disabled;
+    if (data.custom_id !== undefined) res.custom_id = data.custom_id;
+    if (data.url !== undefined) res.url = data.url;
+    if (data.sku_id !== undefined) res.sku_id = data.sku_id;
     return res;
   }
 }
 
-/**
- * Re-exports ButtonBuilder with its static .from() method and fluent interface.
- * 
- * @see {@link https://discord.com/developers/docs/interactions/message-components#buttons}
- */
+import type { ExtractCustomId } from '../utils/guards.ts';
+
 export const ButtonBuilder = ButtonBuilderClass as unknown as {
   new <
     CustomId extends string = string,
     Label extends string = string,
+    Url extends string = string,
+    Opts extends ButtonOptions<CustomId, Label, Url> = ButtonOptions<CustomId, Label, Url>,
   >(
-    opts: AllButtonOptions<CustomId, Label>,
-  ): ButtonBuilderInstance<CustomId>;
+    opts: Opts & ValidateButtonOptions<Opts>,
+  ): ButtonBuilderInstance<ExtractCustomId<Opts>>;
   from(data: APIButtonComponent): ButtonBuilder;
 };
 

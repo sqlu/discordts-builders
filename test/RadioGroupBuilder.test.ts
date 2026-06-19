@@ -22,6 +22,7 @@ describe('RadioGroupBuilder', () => {
 
   it('throws if fewer than 2 options', () => {
     expect(() =>
+      // @ts-expect-error
       new RadioGroupBuilder({
         customId: 'x',
         options: [opt1] as never,
@@ -34,6 +35,7 @@ describe('RadioGroupBuilder', () => {
       new RadioGroupOptionBuilder({ value: `v${i}`, label: `L${i}` }),
     );
     expect(() =>
+      // @ts-expect-error
       new RadioGroupBuilder({ customId: 'x', options: opts as never }),
     ).toThrow('options');
   });

@@ -1,8 +1,16 @@
 import { ComponentType } from '../enums.ts';
 import type { APICheckboxGroupComponent, APICheckboxGroupOption } from '../types.ts';
-import type { CheckArrayLength, CheckMaxLength, WithId } from '../utils/guards.ts';
+import type {
+  CheckArrayLength,
+  CheckMaxLength,
+  CheckMinLength,
+  IsLessThanOrEqual,
+  ExtractCustomId,
+  GetCustomIdField,
+  CheckStringConstraints,
+  ValidateSelectMenuRequired,
+} from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
-
 export interface CheckboxGroupOptionOptions<
   Value extends string = string,
   Label extends string = string,
@@ -11,7 +19,7 @@ export interface CheckboxGroupOptionOptions<
   /**
    * The value returned when this option is selected (maximum of 100 characters).
    */
-  value: Value & CheckMaxLength<Value, 100, 'value'>;
+  value: Value & CheckMinLength<Value, 1, 'value'> & CheckMaxLength<Value, 100, 'value'>;
   /**
    * The label displayed for this option (maximum of 100 characters).
    */
@@ -26,21 +34,44 @@ export interface CheckboxGroupOptionOptions<
   default?: boolean;
 }
 
-export interface BaseCheckboxGroupOptions<
-  Options extends readonly CheckboxGroupOptionBuilder[] = CheckboxGroupOptionBuilder[],
+export interface CheckboxGroupOptions<
+  CustomId extends string = string,
+  Options extends readonly CheckboxGroupOptionBuilder[] = readonly CheckboxGroupOptionBuilder[],
 > {
-  options: Options & CheckArrayLength<Options, 2, 10, 'options'>;
+  options: Options;
   minValues?: number;
   min_values?: number;
   maxValues?: number;
   max_values?: number;
   required?: boolean;
+  customId?: CustomId;
+  custom_id?: CustomId;
 }
 
-export type CheckboxGroupOptions<
-  CustomId extends string = string,
-  Options extends readonly CheckboxGroupOptionBuilder[] = CheckboxGroupOptionBuilder[],
-> = WithId<CustomId> & BaseCheckboxGroupOptions<Options>;
+type GetOptions<Opts> = Opts extends { options: infer O } ? (O extends readonly unknown[] ? O : never) : never;
+
+export type ValidateCheckboxGroupOptions<Opts> =
+  CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : [GetOptions<Opts>] extends [never]
+  ? { readonly error: 'CheckboxGroup requires an options property' }
+  : CheckArrayLength<GetOptions<Opts>, 2, 10, 'options'> extends { readonly error: string }
+  ? CheckArrayLength<GetOptions<Opts>, 2, 10, 'options'>
+  : Opts extends { customId: string; custom_id: string }
+  ? { readonly error: 'Cannot specify both customId and custom_id' }
+  : Opts extends { customId: string } | { custom_id: string }
+  ? (Opts extends { minValues: number; maxValues: number }
+      ? (IsLessThanOrEqual<Opts['minValues'], Opts['maxValues']> extends true
+          ? unknown
+          : { readonly error: 'minValues cannot be greater than maxValues' })
+      : Opts extends { min_values: number; max_values: number }
+      ? (IsLessThanOrEqual<Opts['min_values'], Opts['max_values']> extends true
+          ? unknown
+          : { readonly error: 'minValues cannot be greater than maxValues' })
+      : unknown)
+  : { readonly error: 'CheckboxGroup requires a customId or custom_id property' };
+
+
 
 /**
  * Represents an option within a Checkbox Group component.
@@ -468,14 +499,18 @@ constructor(opts: CheckboxGroupOptions<string, CheckboxGroupOptionBuilder[]>) {
   }
 }
 
+type ExtractCheckboxGroupOptions<Opts> =
+  Opts extends { options: infer O }
+  ? (O extends readonly CheckboxGroupOptionBuilder[] ? O : readonly CheckboxGroupOptionBuilder[])
+  : readonly CheckboxGroupOptionBuilder[];
+
 export const CheckboxGroupBuilder = CheckboxGroupBuilderClass as unknown as {
   new <
     CustomId extends string = string,
-    OptionType extends CheckboxGroupOptionBuilder = CheckboxGroupOptionBuilder,
-    Options extends readonly OptionType[] = readonly OptionType[],
+    Opts extends CheckboxGroupOptions<CustomId, any> = CheckboxGroupOptions<CustomId, any>,
   >(
-    opts: CheckboxGroupOptions<CustomId, Options>,
-  ): CheckboxGroupBuilderInstance<CustomId, Options>;
+    opts: Opts & ValidateCheckboxGroupOptions<Opts> & ValidateSelectMenuRequired<Opts>,
+  ): CheckboxGroupBuilderInstance<ExtractCustomId<Opts>, ExtractCheckboxGroupOptions<Opts>>;
   from(data: APICheckboxGroupComponent): CheckboxGroupBuilder;
 };
 

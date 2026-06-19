@@ -1,10 +1,11 @@
 import { ComponentType } from '../enums.ts';
 import type { APITextDisplayComponent } from '../types.ts';
+import type { CheckMaxLength, CheckMinLength } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
-export interface TextDisplayOptions {
+export interface TextDisplayOptions<Content extends string = string> {
   /** The markdown content to display (1–4000 characters). */
-  content: string;
+  content: Content & CheckMinLength<Content, 1, 'content'>;
 }
 
 export interface TextDisplayBuilderInstance extends TextDisplayBuilderClass {}
@@ -47,11 +48,11 @@ class TextDisplayBuilderClass extends BaseComponent<Partial<APITextDisplayCompon
     return this.data.content;
   }
 
-      /**
+  /**
    * Creates a new TextDisplayBuilder instance.
    * @param opts - Initial configuration options.
    */
-constructor(opts: TextDisplayOptions) {
+constructor(opts: TextDisplayOptions<string>) {
     super();
     this.data.type = ComponentType.TextDisplay;
     if (opts.content !== undefined) this.setContent(opts.content);
@@ -86,7 +87,7 @@ constructor(opts: TextDisplayOptions) {
 }
 
 export const TextDisplayBuilder = TextDisplayBuilderClass as unknown as {
-  new (opts: TextDisplayOptions): TextDisplayBuilderInstance;
+  new <Content extends string = string>(opts: TextDisplayOptions<Content>): TextDisplayBuilderInstance;
   from(data: APITextDisplayComponent): TextDisplayBuilder;
 };
 

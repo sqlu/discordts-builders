@@ -24,6 +24,7 @@ describe('FileUploadBuilder', () => {
 
   it('throws on invalid minValues and maxValues bounds', () => {
     expect(() =>
+      // @ts-expect-error
       new FileUploadBuilder({
         customId: 'x',
         minValues: 3,
@@ -34,11 +35,13 @@ describe('FileUploadBuilder', () => {
     expect(() =>
       new FileUploadBuilder({
         customId: 'x',
+        // @ts-expect-error
         minValues: -1,
       }),
     ).toThrow('between 0 and 10');
 
     expect(() =>
+      // @ts-expect-error
       new FileUploadBuilder({
         customId: 'x',
         minValues: 0,
@@ -46,6 +49,7 @@ describe('FileUploadBuilder', () => {
     ).toThrow('required is false');
 
     expect(() =>
+      // @ts-expect-error
       new FileUploadBuilder({
         customId: 'x',
         required: true,
@@ -56,6 +60,7 @@ describe('FileUploadBuilder', () => {
     expect(() =>
       new FileUploadBuilder({
         customId: 'x',
+        // @ts-expect-error - maxValues > 10 is blocked at compile time
         maxValues: 11,
       }),
     ).toThrow('between 1 and 10');

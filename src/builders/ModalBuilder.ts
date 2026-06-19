@@ -1,4 +1,12 @@
-import type { CheckArrayLength, CheckMaxLength, WithId } from '../utils/guards.ts';
+import type {
+  CheckArrayLength,
+  CheckMaxLength,
+  CheckMinLength,
+  GetLabel,
+  GetCustomIdField,
+  CheckStringConstraints,
+  ExtractCustomId,
+} from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 import type { LabelBuilder } from './LabelBuilder.ts';
 import type { TextDisplayBuilder } from './TextDisplayBuilder.ts';
@@ -7,26 +15,34 @@ import type { APIModalStructure, APIModalComponent } from '../types.ts';
 
 export type ModalComponent = LabelBuilder | TextDisplayBuilder | ActionRowBuilder;
 
-export interface BaseModalOptions<
-  Title extends string = string,
-  Components extends readonly ModalComponent[] = ModalComponent[],
-> {
-  /**
-   * The title displayed at the top of the modal (maximum of 45 characters).
-   */
-  title: Title & CheckMaxLength<Title, 45, 'Title'>;
-  /**
-   * The child components inside this modal (between 1 and 5 components).
-   */
-  components?: Components & CheckArrayLength<Components, 1, 5, 'components'>;
-}
-
-
-export type ModalOptions<
+export interface ModalOptions<
   Title extends string = string,
   CustomId extends string = string,
   Components extends readonly ModalComponent[] = ModalComponent[],
-> = WithId<CustomId> & BaseModalOptions<Title, Components>;
+> {
+  title: Title;
+  components?: Components;
+  customId?: CustomId;
+  custom_id?: CustomId;
+}
+
+type GetTitle<Opts> = Opts extends { title: infer T } ? (T extends string ? T : never) : never;
+type GetComponents<Opts> = Opts extends { components: infer C } ? (C extends readonly unknown[] ? C : never) : never;
+
+export type ValidateModalOptions<Opts> =
+  CheckStringConstraints<GetTitle<Opts>, 1, 45, 'Title'> extends { readonly error: string }
+  ? CheckStringConstraints<GetTitle<Opts>, 1, 45, 'Title'>
+  : CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : [GetComponents<Opts>] extends [never]
+  ? unknown
+  : CheckArrayLength<GetComponents<Opts>, 1, 5, 'components'> extends { readonly error: string }
+  ? CheckArrayLength<GetComponents<Opts>, 1, 5, 'components'>
+  : Opts extends { customId: string; custom_id: string }
+  ? { readonly error: 'Cannot specify both customId and custom_id' }
+  : Opts extends { customId: string } | { custom_id: string }
+  ? unknown
+  : { readonly error: 'Modal requires a customId or custom_id property' };
 
 export interface ModalBuilderInstance<
   CustomId extends string,
@@ -59,12 +75,17 @@ export interface ModalBuilderInstance<
  *
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal Discord Docs - Modal}
  */
-class ModalBuilderClass {
+class ModalBuilderClass<
+  CustomId extends string = string,
+  Components extends readonly ModalComponent[] = readonly ModalComponent[],
+> {
   public readonly data: {
     title?: string;
     custom_id?: string;
     components?: ModalComponent[];
   } = {};
+
+  readonly __components?: Components;
 
   /**
    * Recreates a ModalBuilder from a raw API payload.
@@ -72,7 +93,7 @@ class ModalBuilderClass {
    * @returns A new ModalBuilderClass instance
    * @throws If payload is missing required fields
    */
-  public static from(data: APIModalStructure): ModalBuilderClass {
+  public static from(data: APIModalStructure): ModalBuilderClass<string, readonly ModalComponent[]> {
     const raw = resolveRaw(data) as unknown as APIModalStructure;
     const rawComps = raw.components ?? [];
     const len = rawComps.length;
@@ -111,11 +132,11 @@ class ModalBuilderClass {
     return this.data.components ?? [];
   }
 
-      /**
+  /**
    * Creates a new ModalBuilder instance.
    * @param opts - Initial configuration options.
    */
-constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
+  constructor(opts: ModalOptions<string, CustomId, Components>) {
     if (!opts.title) throw new Error('title is required');
     if (opts.title.length > 45) {
       throw new Error(`title is too long, max is 45 characters but got ${opts.title.length}`);
@@ -132,7 +153,7 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
     this.data.components = [];
 
     if (opts.components !== undefined)
-      this.setComponents(opts.components as ModalComponent[]);
+      this.setComponents(opts.components as unknown as ModalComponent[]);
   }
 
   /**
@@ -171,13 +192,15 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
    * @returns This builder instance
    * @throws If components count is not between 1 and 5
    */
-  setComponents(components: ModalComponent[]): this {
+  setComponents<const NewComponents extends readonly ModalComponent[]>(
+    components: NewComponents & CheckArrayLength<NewComponents, 1, 5, 'components'>,
+  ): ModalBuilderClass<CustomId, NewComponents> {
     if (components.length < 1 || components.length > 5)
       throw new Error(
         `components must have between 1 and 5 entries, but got ${components.length}`,
       );
-    this.data.components = components;
-    return this;
+    this.data.components = components as unknown as ModalComponent[];
+    return this as unknown as ModalBuilderClass<CustomId, NewComponents>;
   }
 
   /**
@@ -186,7 +209,9 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
    * @returns This builder instance
    * @throws If adding components would exceed maximum of 5
    */
-  addComponents(...components: ModalComponent[]): this {
+  addComponents<const NewComponents extends readonly ModalComponent[]>(
+    ...components: NewComponents & CheckArrayLength<[...Components, ...NewComponents], 1, 5, 'components'>
+  ): ModalBuilderClass<CustomId, [...Components, ...NewComponents]> {
     if (!this.data.components) this.data.components = [];
     const cur = this.data.components.length;
     const add = components.length;
@@ -195,7 +220,7 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
     for (let i = 0; i < add; i++) {
       this.data.components.push(components[i]!);
     }
-    return this;
+    return this as unknown as ModalBuilderClass<CustomId, [...Components, ...NewComponents]>;
   }
 
   /**
@@ -205,7 +230,8 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
    * @throws If adding components would exceed maximum of 5
    */
   addLabelComponents(...components: LabelBuilder[]): this {
-    return this.addComponents(...components);
+    (this as ModalBuilderClass).addComponents(...components);
+    return this;
   }
 
   /**
@@ -215,7 +241,8 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
    * @throws If adding components would exceed maximum of 5
    */
   addTextDisplayComponents(...components: TextDisplayBuilder[]): this {
-    return this.addComponents(...components);
+    (this as ModalBuilderClass).addComponents(...components);
+    return this;
   }
 
   /**
@@ -332,16 +359,23 @@ constructor(opts: ModalOptions<string, string, ModalComponent[]>) {
   }
 }
 
+type ExtractComponents<Opts> =
+  Opts extends { components: infer C }
+  ? (C extends readonly ModalComponent[] ? C : readonly ModalComponent[])
+  : readonly ModalComponent[];
+
 export const ModalBuilder = ModalBuilderClass as unknown as {
   new <
-    Title extends string,
+    Title extends string = string,
     CustomId extends string = string,
-    ComponentType extends ModalComponent = ModalComponent,
-    Components extends readonly ComponentType[] = readonly ComponentType[],
+    Opts extends ModalOptions<Title, CustomId, any> = ModalOptions<Title, CustomId, any>,
   >(
-    opts: ModalOptions<Title, CustomId, Components>,
-  ): ModalBuilderInstance<CustomId, Components>;
+    opts: Opts & ValidateModalOptions<Opts>,
+  ): ModalBuilderInstance<ExtractCustomId<Opts>, ExtractComponents<Opts>>;
   from(data: APIModalStructure): ModalBuilder;
 };
 
-export type ModalBuilder = ModalBuilderClass;
+export type ModalBuilder<
+  CustomId extends string = string,
+  Components extends readonly ModalComponent[] = readonly ModalComponent[],
+> = ModalBuilderClass<CustomId, Components>;

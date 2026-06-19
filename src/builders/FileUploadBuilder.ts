@@ -1,26 +1,36 @@
 import { ComponentType } from '../enums.ts';
 import type { APIFileUploadComponent } from '../types.ts';
-import type { CheckMaxLength, WithId } from '../utils/guards.ts';
+import type {
+  CheckMaxLength,
+  FileUploadRange,
+  ExtractCustomId,
+  IsLessThanOrEqual,
+  GetCustomIdField,
+  CheckStringConstraints,
+  ValidateSelectMenuRequired,
+} from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
 export interface BaseFileUploadOptions {
+  customId?: string;
+  custom_id?: string;
   /**
    * Minimum number of files required to upload (0–10).
    * Set to `0` only when `required` is `false`.
    */
-  minValues?: number;
+  minValues?: FileUploadRange;
   /** Alias for {@link minValues} using the raw API field name. */
-  min_values?: number;
+  min_values?: FileUploadRange;
   /** Maximum number of files allowed to upload (1–10). */
-  maxValues?: number;
+  maxValues?: FileUploadRange;
   /** Alias for {@link maxValues} using the raw API field name. */
-  max_values?: number;
+  max_values?: FileUploadRange;
   /** Whether at least one file must be uploaded. */
   required?: boolean;
 }
 
 export type FileUploadOptions<CustomId extends string = string> =
-  WithId<CustomId> & BaseFileUploadOptions;
+  BaseFileUploadOptions;
 
 export interface FileUploadBuilderInstance<CustomId extends string>
   extends FileUploadBuilderClass {
@@ -200,8 +210,42 @@ class FileUploadBuilderClass extends BaseComponent<Partial<APIFileUploadComponen
   }
 }
 
+type GetMinValues<Opts> =
+  Opts extends { minValues: infer M }
+  ? M
+  : Opts extends { min_values: infer M }
+  ? M
+  : never;
+
+type GetMaxValues<Opts> =
+  Opts extends { maxValues: infer M }
+  ? M
+  : Opts extends { max_values: infer M }
+  ? M
+  : never;
+
+type ValidateFileUploadValues<Opts> =
+  [GetMinValues<Opts>] extends [never]
+  ? unknown
+  : [GetMaxValues<Opts>] extends [never]
+  ? unknown
+  : IsLessThanOrEqual<GetMinValues<Opts> & number, GetMaxValues<Opts> & number> extends true
+  ? unknown
+  : { readonly error: 'minValues cannot be greater than maxValues' };
+
+export type ValidateFileUploadOptions<Opts> =
+  CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : Opts extends { customId: string; custom_id: string }
+  ? { readonly error: 'Cannot specify both customId and custom_id' }
+  : Opts extends { customId: string } | { custom_id: string }
+  ? ValidateFileUploadValues<Opts>
+  : { readonly error: 'FileUpload requires a customId or custom_id property' };
+
 export const FileUploadBuilder = FileUploadBuilderClass as unknown as {
-  new <CustomId extends string = string>(opts: FileUploadOptions<CustomId>): FileUploadBuilderInstance<CustomId>;
+  new <Opts extends BaseFileUploadOptions>(
+    opts: Opts & ValidateFileUploadOptions<Opts> & ValidateSelectMenuRequired<Opts>,
+  ): FileUploadBuilderInstance<ExtractCustomId<Opts>>;
   from(data: APIFileUploadComponent): FileUploadBuilder;
 };
 

@@ -1,6 +1,13 @@
 import { ComponentType } from '../enums.ts';
 import type { APIRadioGroupComponent, APIRadioGroupOption } from '../types.ts';
-import type { CheckArrayLength, CheckMaxLength, WithId } from '../utils/guards.ts';
+import type {
+  CheckArrayLength,
+  CheckMaxLength,
+  CheckMinLength,
+  ExtractCustomId,
+  GetCustomIdField,
+  CheckStringConstraints,
+} from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
 export interface RadioGroupOptionOptions<
@@ -8,23 +15,36 @@ export interface RadioGroupOptionOptions<
   Label extends string = string,
   Description extends string = string,
 > {
-  value: Value & CheckMaxLength<Value, 100, 'value'>;
+  value: Value & CheckMinLength<Value, 1, 'value'> & CheckMaxLength<Value, 100, 'value'>;
   label: Label & CheckMaxLength<Label, 100, 'label'>;
   description?: Description & CheckMaxLength<Description, 100, 'description'>;
   default?: boolean;
 }
 
-export interface BaseRadioGroupOptions<
-  Options extends readonly RadioGroupOptionBuilder[] = RadioGroupOptionBuilder[],
+export interface RadioGroupOptions<
+  CustomId extends string = string,
+  Options extends readonly RadioGroupOptionBuilder[] = readonly RadioGroupOptionBuilder[],
 > {
-  options: Options & CheckArrayLength<Options, 2, 10, 'options'>;
+  options: Options;
   required?: boolean;
+  customId?: CustomId;
+  custom_id?: CustomId;
 }
 
-export type RadioGroupOptions<
-  CustomId extends string = string,
-  Options extends readonly RadioGroupOptionBuilder[] = RadioGroupOptionBuilder[],
-> = WithId<CustomId> & BaseRadioGroupOptions<Options>;
+type GetRadioOptions<Opts> = Opts extends { options: infer O } ? (O extends readonly unknown[] ? O : never) : never;
+
+export type ValidateRadioGroupOptions<Opts> =
+  CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : [GetRadioOptions<Opts>] extends [never]
+  ? { readonly error: 'RadioGroup requires an options property' }
+  : CheckArrayLength<GetRadioOptions<Opts>, 2, 10, 'options'> extends { readonly error: string }
+  ? CheckArrayLength<GetRadioOptions<Opts>, 2, 10, 'options'>
+  : Opts extends { customId: string; custom_id: string }
+  ? { readonly error: 'Cannot specify both customId and custom_id' }
+  : Opts extends { customId: string } | { custom_id: string }
+  ? unknown
+  : { readonly error: 'RadioGroup requires a customId or custom_id property' };
 
 /**
  * Represents an option within a Radio Group component.
@@ -384,14 +404,18 @@ constructor(opts: RadioGroupOptions<string, RadioGroupOptionBuilder[]>) {
   }
 }
 
+type ExtractRadioGroupOptions<Opts> =
+  Opts extends { options: infer O }
+  ? (O extends readonly RadioGroupOptionBuilder[] ? O : readonly RadioGroupOptionBuilder[])
+  : readonly RadioGroupOptionBuilder[];
+
 export const RadioGroupBuilder = RadioGroupBuilderClass as unknown as {
   new <
     CustomId extends string = string,
-    OptionType extends RadioGroupOptionBuilder = RadioGroupOptionBuilder,
-    Options extends readonly OptionType[] = readonly OptionType[],
+    Opts extends RadioGroupOptions<CustomId, any> = RadioGroupOptions<CustomId, any>,
   >(
-    opts: RadioGroupOptions<CustomId, Options>,
-  ): RadioGroupBuilderInstance<CustomId, Options>;
+    opts: Opts & ValidateRadioGroupOptions<Opts>,
+  ): RadioGroupBuilderInstance<ExtractCustomId<Opts>, ExtractRadioGroupOptions<Opts>>;
   from(data: APIRadioGroupComponent): RadioGroupBuilder;
 };
 

@@ -9,6 +9,7 @@ import {
   ModalBuilder,
   LabelBuilder,
   TextInputBuilder,
+  CheckboxBuilder,
   StringSelectMenuBuilder,
   SectionBuilder,
   UserSelectMenuBuilder,
@@ -17,6 +18,9 @@ import {
   SelectMenuDefaultValueType,
   type SectionAccessory,
   type AuditIssue,
+  type ExtractAllCustomIds,
+  type ExtractTextInputIds,
+  type ExtractCheckboxIds,
 } from '../src/index.ts';
 
 describe('Developer Features', () => {
@@ -263,6 +267,51 @@ describe('Developer Features', () => {
       const json = menu.toJSON();
       expect(json.default_values).toBeUndefined();
       expect(json.custom_id).toBe('users');
+    });
+
+    it('ExtractAllCustomIds and specific extractors correctly infer custom IDs at compile time', () => {
+      const modal = new ModalBuilder({
+        customId: 'm1',
+        title: 'Title',
+        components: [
+          new LabelBuilder({
+            label: 'Field A',
+            component: new TextInputBuilder({ customId: 'input_a', label: 'Field A' }),
+          }),
+          new LabelBuilder({
+            label: 'Field B',
+            component: new CheckboxBuilder({ customId: 'check_b' }),
+          }),
+        ],
+      });
+
+      const button = new ButtonBuilder({
+        customId: 'btn_c',
+        style: ButtonStyle.Primary,
+        label: 'Button C',
+      });
+
+      type ModalType = typeof modal;
+      type ButtonType = typeof button;
+      type AllIds = ExtractAllCustomIds<ModalType> | ExtractAllCustomIds<ButtonType>;
+      type InputIds = ExtractTextInputIds<ModalType>;
+      type CheckboxIds = ExtractCheckboxIds<ModalType>;
+      type ButtonIds = ExtractAllCustomIds<ButtonType>;
+
+      // Compile-time checks using type assignments
+      const a1: AllIds = 'input_a';
+      const a2: AllIds = 'check_b';
+      const a3: AllIds = 'btn_c';
+      const i1: InputIds = 'input_a';
+      const c1: CheckboxIds = 'check_b';
+      const b1: ButtonIds = 'btn_c';
+
+      expect(a1).toBe('input_a');
+      expect(a2).toBe('check_b');
+      expect(a3).toBe('btn_c');
+      expect(i1).toBe('input_a');
+      expect(c1).toBe('check_b');
+      expect(b1).toBe('btn_c');
     });
   });
 });

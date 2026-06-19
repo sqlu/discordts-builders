@@ -53,8 +53,6 @@ const registry = {
  * Resolves component types and instantiates appropriate builder classes.
  */
 export class ComponentFactory {
-  constructor() {}
-
   /**
    * Creates a component builder from a raw API payload.
    * @param data Raw component data payload
@@ -69,9 +67,7 @@ export class ComponentFactory {
       throw new Error('missing component type in the payload');
 
     const ctor = registry[raw.type];
-    if (!ctor) {
-      throw new Error(`unsupported component type: ${raw.type}`);
-    }
+    if (!ctor) throw new Error(`unsupported component type: ${raw.type}`);
 
     return ctor.from(raw);
   }

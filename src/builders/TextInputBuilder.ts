@@ -1,40 +1,70 @@
 import { ComponentType, TextInputStyle } from '../enums.ts';
 import type { APITextInputComponent } from '../types.ts';
-import type { CheckMaxLength, WithId } from '../utils/guards.ts';
+import type {
+  CheckMaxLength,
+  CheckMinLength,
+  IsLessThanOrEqual,
+  ExtractCustomId,
+  GetLabel,
+  GetCustomIdField,
+  CheckStringConstraints,
+} from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
-export interface BaseTextInputOptions<
-  Label extends string = string,
-  Placeholder extends string = string,
-> {
-  /**
-   * Legacy inline label (max 45 characters). Prefer wrapping in a
-   * {@link LabelBuilder} instead for new modal designs.
-   */
-  label?: Label & CheckMaxLength<Label, 45, 'Label'>;
-  /** Input style: `Short` (single line) or `Paragraph` (multi-line). Defaults to `Short`. */
-  style?: TextInputStyle;
-  /** Minimum character length required for submission (0–4000). */
-  minLength?: number;
-  /** Alias for {@link minLength} using the raw API field name. */
-  min_length?: number;
-  /** Maximum character length allowed for submission (1–4000). */
-  maxLength?: number;
-  /** Alias for {@link maxLength} using the raw API field name. */
-  max_length?: number;
-  /** Placeholder text shown when the field is empty (max 100 characters). */
-  placeholder?: Placeholder & CheckMaxLength<Placeholder, 100, 'Placeholder'>;
-  /** Pre-filled default value (max 4000 characters). */
-  value?: string;
-  /** Whether the field must be filled before the modal can be submitted. */
-  required?: boolean;
-}
-
-export type TextInputOptions<
+export interface TextInputOptions<
   Label extends string = string,
   CustomId extends string = string,
   Placeholder extends string = string,
-> = WithId<CustomId> & BaseTextInputOptions<Label, Placeholder>;
+  Value extends string = string,
+> {
+  label?: Label;
+  style?: TextInputStyle;
+  minLength?: number;
+  min_length?: number;
+  maxLength?: number;
+  max_length?: number;
+  placeholder?: Placeholder;
+  value?: Value;
+  required?: boolean;
+  customId?: CustomId;
+  custom_id?: CustomId;
+}
+
+type GetPlaceholder<Opts> = Opts extends { placeholder: infer P } ? (P extends string ? P : never) : never;
+type GetValue<Opts> = Opts extends { value: infer V } ? (V extends string ? V : never) : never;
+type GetMinLength<Opts> =
+  Opts extends { minLength: infer M }
+  ? M
+  : Opts extends { min_length: infer M }
+  ? M
+  : never;
+type GetMaxLength<Opts> =
+  Opts extends { maxLength: infer M }
+  ? M
+  : Opts extends { max_length: infer M }
+  ? M
+  : never;
+
+export type ValidateTextInputOptions<Opts> =
+  CheckStringConstraints<GetLabel<Opts>, 1, 45, 'Label'> extends { readonly error: string }
+  ? CheckStringConstraints<GetLabel<Opts>, 1, 45, 'Label'>
+  : CheckStringConstraints<GetPlaceholder<Opts>, 1, 100, 'Placeholder'> extends { readonly error: string }
+  ? CheckStringConstraints<GetPlaceholder<Opts>, 1, 100, 'Placeholder'>
+  : CheckStringConstraints<GetValue<Opts>, 1, 4000, 'Value'> extends { readonly error: string }
+  ? CheckStringConstraints<GetValue<Opts>, 1, 4000, 'Value'>
+  : CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
+  ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
+  : Opts extends { customId: string; custom_id: string }
+  ? { readonly error: 'Cannot specify both customId and custom_id' }
+  : Opts extends { customId: string } | { custom_id: string }
+  ? ([GetMinLength<Opts>] extends [never]
+      ? unknown
+      : [GetMaxLength<Opts>] extends [never]
+      ? unknown
+      : IsLessThanOrEqual<GetMinLength<Opts> & number, GetMaxLength<Opts> & number> extends true
+      ? unknown
+      : { readonly error: 'minLength cannot be greater than maxLength' })
+  : { readonly error: 'TextInput requires a customId or custom_id property' };
 
 export interface TextInputBuilderInstance<CustomId extends string>
   extends TextInputBuilderClass {
@@ -177,7 +207,7 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
    * Creates a new TextInputBuilder instance.
    * @param opts - Initial configuration options.
    */
-constructor(opts: TextInputOptions<string, string, string>) {
+constructor(opts: TextInputOptions<string, string, string, string>) {
     super();
     this.data.type = ComponentType.TextInput;
 
@@ -348,12 +378,14 @@ constructor(opts: TextInputOptions<string, string, string>) {
 
 export const TextInputBuilder = TextInputBuilderClass as unknown as {
   new <
-    Label extends string,
     CustomId extends string = string,
+    Label extends string = string,
     Placeholder extends string = string,
+    Value extends string = string,
+    Opts extends TextInputOptions<Label, CustomId, Placeholder, Value> = TextInputOptions<Label, CustomId, Placeholder, Value>,
   >(
-    opts: TextInputOptions<Label, CustomId, Placeholder>,
-  ): TextInputBuilderInstance<CustomId>;
+    opts: Opts & ValidateTextInputOptions<Opts>,
+  ): TextInputBuilderInstance<ExtractCustomId<Opts>>;
   from(data: APITextInputComponent): TextInputBuilder;
 };
 

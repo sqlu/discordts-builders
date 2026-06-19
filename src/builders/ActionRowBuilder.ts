@@ -72,20 +72,14 @@ class ActionRowBuilderClass<
     return (this.data.components ?? []) as unknown as readonly T[];
   }
 
-      /**
-   * Creates a new ActionRowBuilder instance.
-   * @param opts - Initial configuration options.
-   */
   constructor(opts?: ActionRowOptions<T, Components>) {
-    super();
-    this.data.type = ComponentType.ActionRow;
-    if (opts?.components !== undefined) {
-      const len = opts.components.length;
-      if (len > 5) throw new Error("components size can't exceed 5");
-      this.data.components = opts.components as unknown as (APIMessageComponent | APITextInputComponent)[];
-    } else {
-      this.data.components = [];
-    }
+    const comps = opts?.components ?? [];
+    const len = comps.length;
+    if (len > 5) throw new Error("components size can't exceed 5");
+    super({
+      type: ComponentType.ActionRow,
+      components: comps as unknown as (APIMessageComponent | APITextInputComponent)[],
+    });
   }
 
   /**

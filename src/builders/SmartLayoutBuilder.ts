@@ -89,7 +89,9 @@ export class SmartLayoutBuilder {
       }
     };
 
-    for (const comp of this.components) {
+    const total = this.components.length;
+    for (let i = 0; i < total; i++) {
+      const comp = this.components[i]!;
       const isSelect = SELECT_TYPES.has((comp as { type: number }).type);
 
       if (isSelect) {

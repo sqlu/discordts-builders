@@ -1,6 +1,6 @@
 import { ComponentType } from '../enums.ts';
 import type { APILabelComponent, APILabelComponentChild } from '../types.ts';
-import type { CheckMaxLength } from '../utils/guards.ts';
+import type { CheckMaxLength, CheckMinLength } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 import type { TextInputBuilder } from './TextInputBuilder.ts';
 import type { CheckboxBuilder } from './CheckboxBuilder.ts';
@@ -57,8 +57,8 @@ export interface LabelOptions<
   Component extends LabelComponentBuilder = LabelComponentBuilder,
   Description extends string = string,
 > {
-  /** The label text shown above or beside the component (max 45 characters). */
-  label: Label & CheckMaxLength<Label, 45, 'Label'>;
+  /** The label text shown above or beside the component (min 1, max 45 characters). */
+  label: Label & CheckMinLength<Label, 1, 'Label'> & CheckMaxLength<Label, 45, 'Label'>;
   /** The interactive component this label is paired with. */
   component: Component;
   /** Optional description shown below the label (max 100 characters). */
