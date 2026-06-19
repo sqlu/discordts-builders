@@ -54,6 +54,9 @@ Below are the detailed results comparing **50,000 iterations** of component cons
 | **Instantiation** | ~171.7 ms | **~16.2 ms** | **10.6x faster** |
 | **Serialization** | ~40.0 ms | **~15.2 ms** | **2.6x faster** |
 | **Total** | ~211.8 ms | **~31.3 ms** | **6.8x faster** |
+| **Instantiation** | ~164.3 ms | **~16.5 ms** | **10.0x faster** |
+| **Serialization** | ~47.4 ms | **~14.9 ms** | **3.2x faster** |
+| **Total** | ~211.6 ms | **~31.3 ms** | **6.8x faster** |
 
 To run the benchmark yourself:
 ```bash
