@@ -189,7 +189,7 @@ const logoMatch = logoSvg.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
 const logoContent = logoMatch ? logoMatch[1] : "";
 const cleanLogoContent = logoContent.replace(/<defs>[\s\S]*?<\/defs>/, "");
 
-const delay = 0.3;
+const delay = 0.9;
 
 const svgTemplate = `<svg width="800" height="460" viewBox="0 0 800 460" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
