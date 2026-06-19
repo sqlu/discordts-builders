@@ -57,9 +57,7 @@ Below are the detailed results comparing **50,000 iterations** of component cons
 | **Instantiation** | ~164.3 ms | **~16.5 ms** | **10.0x faster** |
 | **Serialization** | ~47.4 ms | **~14.9 ms** | **3.2x faster** |
 | **Total** | ~211.6 ms | **~31.3 ms** | **6.8x faster** |
-214.7 ms | **~30.1 ms** | **7.1x faster** |
-k:ci
-```
+
 > The SVG and README table are only regenerated automatically by CI on push. Running locally outputs results to the console only.
 
 ## Component Architecture
@@ -71,7 +69,6 @@ graph LR
     classDef layout fill:#2b2d2f,color:#fff,stroke:#4f545c,stroke-width:2px
     classDef content fill:#202225,color:#dcddde,stroke:#36393f,stroke-width:1px
 
-    %% --- ARBRE DES MESSAGES ---
     MSG([Messages]):::msgRoot --> Cont[ContainerBuilder]:::layout
     MSG --> RowMsg[ActionRowBuilder]:::layout
 
@@ -85,7 +82,6 @@ graph LR
 
     RowCont --> RowContContent["ButtonBuilder<br>StringSelectMenuBuilder<br>UserSelectMenuBuilder<br>RoleSelectMenuBuilder<br>MentionableSelectMenuBuilder<br>ChannelSelectMenuBuilder"]:::content
 
-    %% --- ARBRE DES MODALS ---
     MOD([Modals]):::modRoot --> Lbl[LabelBuilder]:::layout
     MOD --> RowMod[ActionRowBuilder]:::layout
     MOD --> TxtMod[TextDisplayBuilder]:::content
