@@ -64,45 +64,54 @@ bun run benchmark:ci
 ## Component Architecture
 
 ```mermaid
-graph TD
-    A[Messages] --> B[ContainerBuilder]
-    A --> C[ActionRowBuilder]
+graph LR
+    classDef root fill:#5865F2,color:#fff,stroke:none,font-weight:bold,rx:5px,ry:5px
+    classDef modal fill:#FF3B92,color:#fff,stroke:none,font-weight:bold,rx:5px,ry:5px
+    classDef layout fill:#2b2d2f,color:#fff,stroke:#4f545c,stroke-width:2px
+    classDef content fill:#202225,color:#dcddde,stroke:#36393f,stroke-width:1px
+    classDef selectGroup fill:#2f3136,color:#fff,stroke:#FF3B92,stroke-width:2px,stroke-dasharray: 5 5
 
-    B --> C
-    B --> D[SectionBuilder]
-    B --> E[MediaGalleryBuilder]
-    B --> F[SeparatorBuilder]
-    B --> G[TextDisplayBuilder]
-    B --> H[FileBuilder]
+    MSG([Messages]):::root
+    MOD([Modals]):::modal
 
-    D --> G
-    D --> I[ThumbnailBuilder]
-    D --> J[ButtonBuilder]
+    Cont[ContainerBuilder]:::layout
+    Row[ActionRowBuilder]:::layout
+    Sec[SectionBuilder]:::layout
+    Lbl[LabelBuilder]:::layout
 
-    C --> J
-    C --> K[Select Menus]
-    C --> L[TextInputBuilder]
+    MSG --> Cont
+    MSG --> Row
+    MOD --> Lbl
+    MOD --> Txt[TextDisplayBuilder]:::content
+    MOD --> Row
 
-    K --> K1[StringSelectMenuBuilder]
-    K --> K2[UserSelectMenuBuilder]
-    K --> K3[RoleSelectMenuBuilder]
-    K --> K4[MentionableSelectMenuBuilder]
-    K --> K5[ChannelSelectMenuBuilder]
+    Cont --> Sec
+    Cont --> Row
+    Cont --> Media[MediaGalleryBuilder]:::content
+    Cont --> Sep[SeparatorBuilder]:::content
+    Cont --> Txt
+    Cont --> File[FileBuilder]:::content
 
-    M[Modals] --> N[LabelBuilder]
-    M --> G
-    M --> C
+    Sec --> Txt
+    Sec --> Thumb[ThumbnailBuilder]:::content
+    Sec --> Btn[ButtonBuilder]:::content
 
-    N --> L
-    N --> O[RadioGroupBuilder]
-    N --> P[CheckboxGroupBuilder]
-    N --> Q[CheckboxBuilder]
-    N --> R[FileUploadBuilder]
-    N --> K
+    Row --> Btn
+    Row --> Sel[[Select Menus]]:::selectGroup
+    Row --> TxtIn[TextInputBuilder]:::content
 
-    style A fill:#5865F2,color:#fff
-    style M fill:#FF3B92,color:#fff
-    style B fill:#2b2d2f,color:#fff
+    Lbl --> TxtIn
+    Lbl --> Rad[RadioGroupBuilder]:::content
+    Lbl --> ChkGrp[CheckboxGroupBuilder]:::content
+    Lbl --> Chk[CheckboxBuilder]:::content
+    Lbl --> FileUp[FileUploadBuilder]:::content
+    Lbl --> Sel
+
+    Sel -.-> S_Str[StringSelectMenuBuilder]:::content
+    Sel -.-> S_Usr[UserSelectMenuBuilder]:::content
+    Sel -.-> S_Rol[RoleSelectMenuBuilder]:::content
+    Sel -.-> S_Men[MentionableSelectMenuBuilder]:::content
+    Sel -.-> S_Chn[ChannelSelectMenuBuilder]:::content
 ```
 
 ## Discord Component Flags
