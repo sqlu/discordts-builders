@@ -12,11 +12,18 @@ import type {
 } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Base options for configuring a new FileUploadBuilder.
+ * @template MinValues The minimum number of files.
+ * @template MaxValues The maximum number of files.
+ */
 export interface BaseFileUploadOptions<
   MinValues extends FileUploadRange = FileUploadRange,
   MaxValues extends FileUploadRange = FileUploadRange,
 > {
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: string;
+  /** Alias for customId. */
   custom_id?: string;
   /**
    * Minimum number of files required to upload (0–10).
@@ -33,11 +40,20 @@ export interface BaseFileUploadOptions<
   required?: boolean;
 }
 
+/**
+ * Config options for a new FileUploadBuilder.
+ * @template CustomId The custom ID string literal.
+ */
 export type FileUploadOptions<CustomId extends string = string> =
   BaseFileUploadOptions;
 
+/**
+ * Interface for a fully configured FileUploadBuilder.
+ * @template CustomId The custom ID of the file upload.
+ */
 export interface FileUploadBuilderInstance<CustomId extends string>
   extends FileUploadBuilderClass {
+  /** The configured custom identifier of the file upload. */
   readonly customId: CustomId;
 }
 
@@ -66,10 +82,10 @@ class FileUploadBuilderClass extends BaseComponent<Partial<APIFileUploadComponen
   public override readonly type = ComponentType.FileUpload;
 
   /**
-   * Recreates a {@link FileUploadBuilder} from a raw Discord API payload.
+   * Loads a {@link FileUploadBuilder} from raw Discord data.
    *
    * @param data - Raw file upload payload from Discord.
-   * @returns A fully hydrated `FileUploadBuilderClass` instance.
+   * @returns Populated `FileUploadBuilderClass` instance.
    */
   public static from(data: APIFileUploadComponent): FileUploadBuilderClass {
     const raw = resolveRaw(data) as unknown as APIFileUploadComponent;
@@ -82,7 +98,7 @@ class FileUploadBuilderClass extends BaseComponent<Partial<APIFileUploadComponen
   }
 
   /**
-   * The custom identifier sent back on modal submit.
+   * Custom ID sent back on submit.
    * @readonly
    */
   public get customId(): string | undefined {
@@ -127,8 +143,8 @@ class FileUploadBuilderClass extends BaseComponent<Partial<APIFileUploadComponen
   }
 
   /**
-* Creates a new FileUploadBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new FileUploadBuilder.
+* @param opts - Config options.
 */
   constructor(opts: FileUploadOptions<string>) {
     super();
@@ -149,9 +165,9 @@ class FileUploadBuilderClass extends BaseComponent<Partial<APIFileUploadComponen
   }
 
   /**
-* Sets the custom identifier for this component (maximum of 100 characters).
-* @param cid - The unique custom identifier.
-* @returns This builder instance for chaining.
+* Sets the custom ID (up to 100 chars).
+* @param cid - Unique custom ID.
+* @returns This builder for chaining.
 */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -234,6 +250,10 @@ type ValidateFileUploadValues<Opts> =
   ? unknown
   : { readonly error: 'minValues cannot be greater than maxValues' };
 
+/**
+ * Type-level validation for FileUploadOptions.
+ * @template Opts The user configuration options object.
+ */
 export type ValidateFileUploadOptions<Opts> =
   CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
   ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
@@ -254,4 +274,7 @@ export const FileUploadBuilder = FileUploadBuilderClass as unknown as {
   from(data: APIFileUploadComponent): FileUploadBuilder;
 };
 
+/**
+ * Alias for FileUploadBuilderClass.
+ */
 export type FileUploadBuilder = FileUploadBuilderClass;

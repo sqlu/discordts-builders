@@ -13,22 +13,41 @@ import type {
 } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new ButtonBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Label The label text string literal.
+ * @template Url The URL string literal.
+ */
 export interface ButtonOptions<
   CustomId extends string = string,
   Label extends string = string,
   Url extends string = string,
 > {
+  /** Button visual style. */
   style?: ButtonStyle;
+  /** Button text label (up to 80 chars). */
   label?: Label;
+  /** Emoji next to the button text. */
   emoji?: APIMessageComponentEmoji;
+  /** Disable the button? */
   disabled?: boolean;
+  /** Link URL (up to 512 chars, Link buttons only). */
   url?: Url;
+  /** SKU ID for monetization (Premium buttons only). */
   skuId?: string;
+  /** Alias for skuId. */
   sku_id?: string;
+  /** Custom ID sent on click (up to 100 chars, ignore on Link/Premium). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
+/**
+ * Type-level validation for ButtonOptions.
+ * @template Opts The user configuration options object.
+ */
 export type ValidateButtonOptions<Opts> =
   CheckStringConstraints<GetLabel<Opts>, 1, 80, 'Label'> extends { readonly error: string }
   ? CheckStringConstraints<GetLabel<Opts>, 1, 80, 'Label'>
@@ -70,8 +89,13 @@ export type ValidateButtonOptions<Opts> =
           : { readonly error: 'Regular button must have a label or emoji' })
       : { readonly error: 'Regular button requires a customId or custom_id property' });
 
+/**
+ * Interface for a fully configured ButtonBuilder.
+ * @template CustomId The custom ID of the button.
+ */
 export interface ButtonBuilderInstance<CustomId extends string>
   extends ButtonBuilderClass {
+  /** Custom ID of this button. */
   readonly customId: CustomId;
 }
 
@@ -144,7 +168,7 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
   /**
    * Gets the label text of the button.
    * @readonly
-   * @returns The label text.
+   * @returns Label text.
    */
   public get label(): string | undefined {
     return this.data.label;
@@ -162,7 +186,7 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
   /**
    * Gets the custom identifier of the button.
    * @readonly
-   * @returns The custom identifier.
+   * @returns Custom ID.
    */
   public get customId(): string | undefined {
     return this.data.custom_id;
@@ -196,8 +220,8 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
   }
 
   /**
-   * Creates a new ButtonBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new ButtonBuilder.
+   * @param opts - Config options.
    */
   constructor(opts: ButtonOptions<string, string, string>) {
     const s = opts.style;
@@ -273,7 +297,7 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
 
   /**
    * Sets the label text (limit 80 characters).
-   * @param lbl The label text.
+   * @param lbl Label text.
    * @returns The builder instance for chaining.
    */
   setLabel(lbl: CheckMaxLength<string, 80, 'label'>): this {
@@ -293,9 +317,9 @@ class ButtonBuilderClass extends BaseComponent<Partial<APIButtonComponent>> {
   }
 
       /**
-   * Sets the custom identifier for this component (maximum of 100 characters).
-   * @param cid - The unique custom identifier.
-   * @returns This builder instance for chaining.
+   * Sets the custom ID (up to 100 chars).
+   * @param cid - Unique custom ID.
+   * @returns This builder for chaining.
    */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -367,4 +391,7 @@ export const ButtonBuilder = ButtonBuilderClass as unknown as {
   from(data: APIButtonComponent): ButtonBuilder;
 };
 
+/**
+ * Alias for ButtonBuilderClass.
+ */
 export type ButtonBuilder = ButtonBuilderClass;

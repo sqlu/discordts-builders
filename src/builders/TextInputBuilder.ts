@@ -11,6 +11,15 @@ import type {
 } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new TextInputBuilder.
+ * @template Label The label string literal.
+ * @template CustomId The custom ID string literal.
+ * @template Placeholder The placeholder text string literal.
+ * @template Value The pre-filled value string literal.
+ * @template MinLength The minimum character length.
+ * @template MaxLength The maximum character length.
+ */
 export interface TextInputOptions<
   Label extends string = string,
   CustomId extends string = string,
@@ -19,16 +28,27 @@ export interface TextInputOptions<
   MinLength extends number = number,
   MaxLength extends number = number,
 > {
+  /** Legacy inline label text (up to 45 chars). */
   label?: Label;
+  /** Input style (Short or Paragraph). */
   style?: TextInputStyle;
+  /** Min character count (0 to 4000). */
   minLength?: MinLength;
+  /** Alias for minLength. */
   min_length?: MinLength;
+  /** Max character count (1 to 4000). */
   maxLength?: MaxLength;
+  /** Alias for maxLength. */
   max_length?: MaxLength;
+  /** Ghost text when empty (up to 100 chars). */
   placeholder?: Placeholder;
+  /** Pre-filled default value (up to 4000 chars). */
   value?: Value;
+  /** Is this field required? Defaults to true. */
   required?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
@@ -47,6 +67,10 @@ type GetMaxLength<Opts> =
   ? M
   : never;
 
+/**
+ * Type-level validation for TextInputOptions.
+ * @template Opts The user configuration options.
+ */
 export type ValidateTextInputOptions<Opts> =
   CheckStringConstraints<GetLabel<Opts>, 1, 45, 'Label'> extends { readonly error: string }
   ? CheckStringConstraints<GetLabel<Opts>, 1, 45, 'Label'>
@@ -68,8 +92,13 @@ export type ValidateTextInputOptions<Opts> =
       : { readonly error: 'minLength cannot be greater than maxLength' })
   : { readonly error: 'TextInput requires a customId or custom_id property' };
 
+/**
+ * Interface for a fully configured TextInputBuilder.
+ * @template CustomId The custom ID of the text input.
+ */
 export interface TextInputBuilderInstance<CustomId extends string>
   extends TextInputBuilderClass {
+  /** Custom ID of this input. */
   readonly customId: CustomId;
 }
 
@@ -100,10 +129,10 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   public override readonly type = ComponentType.TextInput;
 
   /**
-   * Recreates a {@link TextInputBuilder} from a raw Discord API payload.
+   * Loads a {@link TextInputBuilder} from raw Discord data.
    *
    * @param data - Raw text input payload from Discord.
-   * @returns A fully hydrated `TextInputBuilderClass` instance.
+   * @returns Populated `TextInputBuilderClass` instance.
    */
   public static from(data: APITextInputComponent): TextInputBuilderClass {
     const raw = resolveRaw(data) as unknown as APITextInputComponent;
@@ -124,14 +153,14 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   /**
    * The legacy inline label text.
    * @readonly
-   * @deprecated Prefer wrapping in a {@link LabelBuilder} for new designs.
+   * @deprecated Wrap in {@link LabelBuilder} instead.
    */
   public get label(): string | undefined {
     return this.data.label;
   }
 
   /**
-   * The custom identifier sent back on modal submit.
+   * Custom ID sent back on submit.
    * @readonly
    */
   public get customId(): string | undefined {
@@ -139,7 +168,7 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   }
 
   /**
-   * Get the input style (`Short` = 1 or `Paragraph` = 2).
+   * Get input style (Short/Paragraph).
    * @readonly
    */
   public get style(): TextInputStyle | undefined {
@@ -147,7 +176,7 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   }
 
   /**
-   * Get minimum character length.
+   * Get min length.
    * @readonly
    */
   public get minLength(): number | undefined {
@@ -155,7 +184,7 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   }
 
   /**
-   * Get maximum character length.
+   * Get max length.
    * @readonly
    */
   public get maxLength(): number | undefined {
@@ -179,7 +208,7 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   }
 
   /**
-   * Get if this field is required.
+   * Check if field is required.
    * @readonly
    */
   public get required(): boolean | undefined {
@@ -206,8 +235,8 @@ class TextInputBuilderClass extends BaseComponent<Partial<APITextInputComponent>
   }
 
       /**
-   * Creates a new TextInputBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new TextInputBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: TextInputOptions<string, string, string, string>) {
     super();
@@ -236,9 +265,9 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
       /**
-   * Sets the custom identifier for this component (maximum of 100 characters).
-   * @param cid - The unique custom identifier.
-   * @returns This builder instance for chaining.
+   * Sets the custom ID (up to 100 chars).
+   * @param cid - Unique custom ID.
+   * @returns This builder for chaining.
    */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -247,12 +276,12 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets the legacy inline label (max 45 characters).
+   * Sets legacy inline label (up to 45 chars).
    *
-   * @param lbl - The label text.
+   * @param lbl - Label text.
    * @returns This builder for chaining.
    * @throws If label exceeds 45 characters.
-   * @deprecated Wrap in a {@link LabelBuilder} for new designs.
+   * @deprecated Wrap in {@link LabelBuilder} instead.
    */
   setLabel(lbl: CheckMaxLength<string, 45, 'label'>): this {
     this.validateLength(lbl, 45, 'label');
@@ -261,7 +290,7 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Clears the legacy inline label.
+   * Clears legacy inline label.
    * @returns This builder for chaining.
    */
   clearLabel(): this {
@@ -270,7 +299,7 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets the text input style.
+   * Sets input style.
    *
    * @param style - `TextInputStyle.Short` for a single-line input, `TextInputStyle.Paragraph` for multi-line.
    * @returns This builder for chaining.
@@ -283,9 +312,9 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets the minimum character length required (0-4000).
+   * Sets min character length (0-4000).
    *
-   * @param min - The minimum character count.
+   * @param min - Min characters.
    * @returns This builder for chaining.
    * @throws If `min` is out of range or exceeds `maxLength`.
    */
@@ -299,9 +328,9 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets the maximum character length allowed (1-4000).
+   * Sets max character length (1-4000).
    *
-   * @param max - The maximum character count.
+   * @param max - Max characters.
    * @returns This builder for chaining.
    * @throws If `max` is out of range or less than `minLength`.
    */
@@ -315,9 +344,9 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets the placeholder text displayed when the field is empty (max 100 characters).
+   * Sets placeholder (up to 100 chars).
    *
-   * @param placeholder - The placeholder string.
+   * @param placeholder - Placeholder text.
    * @returns This builder for chaining.
    */
   setPlaceholder(placeholder: CheckMaxLength<string, 100, 'placeholder'>): this {
@@ -327,9 +356,9 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets the pre-filled default value shown in the input (max 4000 characters).
+   * Sets default value (up to 4000 chars).
    *
-   * @param value - The pre-filled string.
+   * @param value - Default value string.
    * @returns This builder for chaining.
    */
   setValue(value: CheckMaxLength<string, 4000, 'value'>): this {
@@ -339,9 +368,9 @@ constructor(opts: TextInputOptions<string, string, string, string>) {
   }
 
   /**
-   * Sets whether this field is required to submit the modal.
+   * Sets if field is required.
    *
-   * @param required - `true` to make the field mandatory.
+   * @param required - True to make it required.
    * @returns This builder for chaining.
    */
   setRequired(required: boolean): this {
@@ -379,4 +408,7 @@ export const TextInputBuilder = TextInputBuilderClass as unknown as {
   from(data: APITextInputComponent): TextInputBuilder;
 };
 
+/**
+ * Alias for TextInputBuilderClass.
+ */
 export type TextInputBuilder = TextInputBuilderClass;

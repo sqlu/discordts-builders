@@ -13,22 +13,39 @@ import type { TextDisplayBuilder } from './TextDisplayBuilder.ts';
 import type { ActionRowBuilder } from './ActionRowBuilder.ts';
 import type { APIModalStructure, APIModalComponent } from '../types.ts';
 
+/**
+ * Valid layout components that can be placed inside a Modal as rows.
+ */
 export type ModalComponent = LabelBuilder | TextDisplayBuilder | ActionRowBuilder;
 
+/**
+ * Config options for a new ModalBuilder.
+ * @template Title The title text.
+ * @template CustomId The custom ID string literal.
+ * @template Components The array type of ModalComponent.
+ */
 export interface ModalOptions<
   Title extends string = string,
   CustomId extends string = string,
   Components extends readonly ModalComponent[] = ModalComponent[],
 > {
+  /** The title of the modal popup (1-45 characters). */
   title: Title;
+  /** The list of input fields/components inside the modal (1-5 components allowed). */
   components?: Components;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
 type GetTitle<Opts> = Opts extends { title: infer T } ? (T extends string ? T : never) : never;
 type GetComponents<Opts> = Opts extends { components: infer C } ? (C extends readonly unknown[] ? C : never) : never;
 
+/**
+ * Type-level validation for ModalOptions.
+ * @template Opts The user configuration options object.
+ */
 export type ValidateModalOptions<Opts> =
   CheckStringConstraints<GetTitle<Opts>, 1, 45, 'Title'> extends { readonly error: string }
   ? CheckStringConstraints<GetTitle<Opts>, 1, 45, 'Title'>
@@ -44,11 +61,18 @@ export type ValidateModalOptions<Opts> =
   ? unknown
   : { readonly error: 'Modal requires a customId or custom_id property' };
 
+/**
+ * Interface for a fully configured ModalBuilder.
+ * @template CustomId The custom ID of the modal.
+ * @template Components The components contained in the modal.
+ */
 export interface ModalBuilderInstance<
   CustomId extends string,
   Components extends readonly ModalComponent[] = readonly ModalComponent[],
 > extends ModalBuilderClass {
+  /** The configured custom identifier of the modal. */
   readonly customId: CustomId;
+  /** The child components configured in the modal. */
   readonly components: Components;
 }
 
@@ -133,8 +157,8 @@ class ModalBuilderClass<
   }
 
   /**
-   * Creates a new ModalBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new ModalBuilder.
+   * @param opts - Config options.
    */
   constructor(opts: ModalOptions<string, CustomId, Components>) {
     if (!opts.title) throw new Error('title is required');
@@ -171,9 +195,9 @@ class ModalBuilderClass<
   }
 
       /**
-   * Sets the custom identifier for this component (maximum of 100 characters).
-   * @param cid - The unique custom identifier.
-   * @returns This builder instance for chaining.
+   * Sets the custom ID (up to 100 chars).
+   * @param cid - Unique custom ID.
+   * @returns This builder for chaining.
    */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     if (cid.length < 1) {
@@ -374,6 +398,11 @@ export const ModalBuilder = ModalBuilderClass as unknown as {
   from(data: APIModalStructure): ModalBuilder;
 };
 
+/**
+ * Alias for ModalBuilderClass.
+ * @template CustomId The custom ID string literal.
+ * @template Components The child components tuple.
+ */
 export type ModalBuilder<
   CustomId extends string = string,
   Components extends readonly ModalComponent[] = readonly ModalComponent[],

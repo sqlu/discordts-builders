@@ -3,22 +3,39 @@ import type { APIActionRowComponent, APIComponent, APIMessageComponent, APITextI
 import type { CheckArrayLength, ValidActionRowComponents } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Valid components for Action Rows.
+ */
 export type ActionRowComponent = {
+  /** Discord component type. */
   type: number;
+  /** Convert to raw Discord API payload. */
   toJSON(): APIMessageComponent | APITextInputComponent;
 };
 
+/**
+ * Config options for a new ActionRowBuilder.
+ * @template T The component type.
+ * @template Components The tuple type of components.
+ */
 export interface ActionRowOptions<
   T extends ActionRowComponent = ActionRowComponent,
   Components extends readonly T[] = T[],
 > {
+  /** Children components in this row. */
   components?: Components & ValidActionRowComponents<Components>;
 }
 
+/**
+ * Interface for a fully configured ActionRowBuilder.
+ * @template T The component type.
+ * @template Components The components tuple.
+ */
 export interface ActionRowBuilderInstance<
   T extends ActionRowComponent = ActionRowComponent,
   Components extends readonly T[] = readonly T[],
 > extends ActionRowBuilderClass<T, Components> {
+  /** Children components inside this row. */
   readonly components: Components;
 }
 
@@ -162,6 +179,10 @@ export const ActionRowBuilder = ActionRowBuilderClass as unknown as {
   from(data: APIActionRowComponent<APIMessageComponent | APITextInputComponent>): ActionRowBuilderClass<ActionRowComponent, readonly ActionRowComponent[]>;
 };
 
+/**
+ * Class helper type for ActionRowBuilder.
+ * @template T The components included inside the Action Row.
+ */
 export type ActionRowBuilder<
   T extends ActionRowComponent = ActionRowComponent,
 > = ActionRowBuilderClass<T, readonly T[]>;

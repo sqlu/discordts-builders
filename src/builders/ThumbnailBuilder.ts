@@ -3,15 +3,23 @@ import type { APIThumbnailComponent } from '../types.ts';
 import type { CheckMediaUrl, CheckMaxLength } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new ThumbnailBuilder.
+ */
 export interface ThumbnailOptions {
-  /** Image URL - must use `http://`, `https://`, or `attachment://` scheme. */
+  /** Image URL (http/https/attachment scheme). */
   url: string;
-  /** Alt text description for accessibility (max 1024 characters). */
+  /** Alt description text (up to 1024 chars). */
   description?: string;
-  /** Whether to blur the thumbnail behind a spoiler overlay. */
+  /** Blur behind a spoiler? */
   spoiler?: boolean;
 }
 
+/**
+ * Type-level validation for ThumbnailOptions.
+ * @template Url The image URL string literal.
+ * @template Description The description string literal.
+ */
 export type ValidateThumbnailOptions<Url extends string, Description extends string = string> =
   CheckMediaUrl<Url> extends { readonly error: string }
   ? CheckMediaUrl<Url>
@@ -23,6 +31,9 @@ export type ValidateThumbnailOptions<Url extends string, Description extends str
   ? CheckMaxLength<Description, 1024, 'description'>
   : unknown;
 
+/**
+ * Interface for a fully configured ThumbnailBuilder.
+ */
 export interface ThumbnailBuilderInstance extends ThumbnailBuilderClass { }
 
 /**
@@ -47,10 +58,10 @@ class ThumbnailBuilderClass extends BaseComponent<Partial<APIThumbnailComponent>
   public override readonly type = ComponentType.Thumbnail;
 
   /**
-   * Recreates a {@link ThumbnailBuilder} from a raw Discord API payload.
+   * Loads a {@link ThumbnailBuilder} from raw Discord data.
    *
    * @param data - Raw thumbnail payload from Discord.
-   * @returns A fully hydrated `ThumbnailBuilderClass` instance.
+   * @returns Populated `ThumbnailBuilderClass` instance.
    */
   public static from(data: APIThumbnailComponent): ThumbnailBuilderClass {
     const raw = resolveRaw(data) as unknown as APIThumbnailComponent & { url?: string };
@@ -86,8 +97,8 @@ class ThumbnailBuilderClass extends BaseComponent<Partial<APIThumbnailComponent>
   }
 
   /**
-* Creates a new ThumbnailBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new ThumbnailBuilder.
+* @param opts - Config options.
 */
   constructor(opts: ThumbnailOptions) {
     super();
@@ -145,7 +156,7 @@ class ThumbnailBuilderClass extends BaseComponent<Partial<APIThumbnailComponent>
   }
 
   /**
-   * Serializes this thumbnail to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    *
    * @returns The JSON representation.
    * @throws If no URL has been set.
@@ -172,4 +183,7 @@ export const ThumbnailBuilder = ThumbnailBuilderClass as unknown as {
   from(data: APIThumbnailComponent): ThumbnailBuilder;
 };
 
+/**
+ * Alias for ThumbnailBuilderClass.
+ */
 export type ThumbnailBuilder = ThumbnailBuilderClass;

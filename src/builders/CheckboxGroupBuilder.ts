@@ -11,6 +11,12 @@ import type {
   ValidateSelectMenuRequired,
 } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
+/**
+ * Config options for a new CheckboxGroupOptionBuilder.
+ * @template Value The value string literal.
+ * @template Label The label string literal.
+ * @template Description The description string literal.
+ */
 export interface CheckboxGroupOptionOptions<
   Value extends string = string,
   Label extends string = string,
@@ -34,24 +40,43 @@ export interface CheckboxGroupOptionOptions<
   default?: boolean;
 }
 
+/**
+ * Config options for a new CheckboxGroupBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Options The checkbox option builders array.
+ * @template MinValues The minimum selected options.
+ * @template MaxValues The maximum selected options.
+ */
 export interface CheckboxGroupOptions<
   CustomId extends string = string,
   Options extends readonly CheckboxGroupOptionBuilder[] = readonly CheckboxGroupOptionBuilder[],
   MinValues extends number = number,
   MaxValues extends number = number,
 > {
+  /** The list of checkbox options (2-10 options allowed). */
   options: readonly [...Options];
+  /** The minimum number of checked options required (0-10). */
   minValues?: MinValues;
+  /** Alias for minValues. */
   min_values?: MinValues;
+  /** The maximum number of checked options allowed (1-10). */
   maxValues?: MaxValues;
+  /** Alias for maxValues. */
   max_values?: MaxValues;
+  /** Whether at least minValues must be selected (defaults to true). */
   required?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
 type GetOptions<Opts> = Opts extends { options: infer O } ? (O extends readonly unknown[] ? O : never) : never;
 
+/**
+ * Type-level validation for CheckboxGroupOptions.
+ * @template Opts The user configuration options object.
+ */
 export type ValidateCheckboxGroupOptions<Opts> =
   CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
   ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
@@ -130,8 +155,8 @@ class CheckboxGroupOptionBuilderClass {
   }
 
       /**
-   * Creates a new CheckboxGroupOptionBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new CheckboxGroupOptionBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: CheckboxGroupOptionOptions<string, string, string>) {
     const val = opts.value as string | undefined;
@@ -220,6 +245,9 @@ constructor(opts: CheckboxGroupOptionOptions<string, string, string>) {
   }
 }
 
+/**
+ * Interface for a configured CheckboxGroupOptionBuilder.
+ */
 export interface CheckboxGroupOptionBuilderInstance
   extends CheckboxGroupOptionBuilderClass {}
 
@@ -237,11 +265,18 @@ export const CheckboxGroupOptionBuilder =
 
 export type CheckboxGroupOptionBuilder = CheckboxGroupOptionBuilderClass;
 
+/**
+ * Interface for a fully configured CheckboxGroupBuilder.
+ * @template CustomId The custom ID of the checkbox group.
+ * @template Options The options contained in the checkbox group.
+ */
 export interface CheckboxGroupBuilderInstance<
   CustomId extends string,
   Options extends readonly CheckboxGroupOptionBuilder[] = readonly CheckboxGroupOptionBuilder[],
 > extends CheckboxGroupBuilderClass {
+  /** The configured custom identifier of the group. */
   readonly customId: CustomId;
+  /** The checkbox options configured in the group. */
   readonly options: Options;
 }
 
@@ -348,8 +383,8 @@ class CheckboxGroupBuilderClass extends BaseComponent<Partial<APICheckboxGroupCo
   }
 
       /**
-   * Creates a new CheckboxGroupBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new CheckboxGroupBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: CheckboxGroupOptions<string, CheckboxGroupOptionBuilder[]>) {
     super();
@@ -374,9 +409,9 @@ constructor(opts: CheckboxGroupOptions<string, CheckboxGroupOptionBuilder[]>) {
   }
 
       /**
-   * Sets the custom identifier for this component (maximum of 100 characters).
-   * @param cid - The unique custom identifier.
-   * @returns This builder instance for chaining.
+   * Sets the custom ID (up to 100 chars).
+   * @param cid - Unique custom ID.
+   * @returns This builder for chaining.
    */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -517,4 +552,7 @@ export const CheckboxGroupBuilder = CheckboxGroupBuilderClass as unknown as {
   from(data: APICheckboxGroupComponent): CheckboxGroupBuilder;
 };
 
+/**
+ * Alias for CheckboxGroupBuilderClass.
+ */
 export type CheckboxGroupBuilder = CheckboxGroupBuilderClass;

@@ -10,13 +10,23 @@ import type {
   CheckMaxLength,
 } from '../utils/guards.ts';
 
+/**
+ * Config options for a new CheckboxBuilder.
+ * @template CustomId The custom ID string literal.
+ */
 export interface CheckboxOptions<CustomId extends string = string> {
   /** Whether the checkbox is checked by default when the modal opens. */
   default?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
+/**
+ * Type-level validation for CheckboxOptions.
+ * @template Opts The user configuration options object.
+ */
 export type ValidateCheckboxOptions<Opts> =
   CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
   ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
@@ -26,8 +36,13 @@ export type ValidateCheckboxOptions<Opts> =
   ? unknown
   : { readonly error: 'Checkbox requires a customId or custom_id property' };
 
+/**
+ * Interface for a fully configured CheckboxBuilder.
+ * @template CustomId The custom ID of the checkbox.
+ */
 export interface CheckboxBuilderInstance<CustomId extends string>
   extends CheckboxBuilderClass {
+  /** The configured custom identifier of the checkbox. */
   readonly customId: CustomId;
 }
 
@@ -54,10 +69,10 @@ class CheckboxBuilderClass extends BaseComponent<Partial<APICheckboxComponent>> 
   public override readonly type = ComponentType.Checkbox;
 
   /**
-   * Recreates a {@link CheckboxBuilder} from a raw Discord API payload.
+   * Loads a {@link CheckboxBuilder} from raw Discord data.
    *
    * @param data - Raw checkbox payload from Discord.
-   * @returns A fully hydrated `CheckboxBuilderClass` instance.
+   * @returns Populated `CheckboxBuilderClass` instance.
    */
   public static from(data: APICheckboxComponent): CheckboxBuilderClass {
     const raw = resolveRaw(data) as unknown as APICheckboxComponent;
@@ -68,7 +83,7 @@ class CheckboxBuilderClass extends BaseComponent<Partial<APICheckboxComponent>> 
   }
 
   /**
-   * The custom identifier sent back on modal submit.
+   * Custom ID sent back on submit.
    * @readonly
    */
   public get customId(): string | undefined {
@@ -84,8 +99,8 @@ class CheckboxBuilderClass extends BaseComponent<Partial<APICheckboxComponent>> 
   }
 
   /**
-* Creates a new CheckboxBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new CheckboxBuilder.
+* @param opts - Config options.
 */
   constructor(opts: CheckboxOptions<string>) {
     super();
@@ -100,9 +115,9 @@ class CheckboxBuilderClass extends BaseComponent<Partial<APICheckboxComponent>> 
   }
 
   /**
-* Sets the custom identifier for this component (maximum of 100 characters).
-* @param cid - The unique custom identifier.
-* @returns This builder instance for chaining.
+* Sets the custom ID (up to 100 chars).
+* @param cid - Unique custom ID.
+* @returns This builder for chaining.
 */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -122,7 +137,7 @@ class CheckboxBuilderClass extends BaseComponent<Partial<APICheckboxComponent>> 
   }
 
   /**
-   * Serializes this checkbox to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    *
    * @returns The JSON representation.
    *
@@ -146,4 +161,7 @@ export const CheckboxBuilder = CheckboxBuilderClass as unknown as {
   from(data: APICheckboxComponent): CheckboxBuilder;
 };
 
+/**
+ * Alias for CheckboxBuilderClass.
+ */
 export type CheckboxBuilder = CheckboxBuilderClass;

@@ -10,29 +10,52 @@ import type {
 } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new RadioGroupOptionBuilder.
+ * @template Value The value string literal.
+ * @template Label The label string literal.
+ * @template Description The description string literal.
+ */
 export interface RadioGroupOptionOptions<
   Value extends string = string,
   Label extends string = string,
   Description extends string = string,
 > {
+  /** The value returned when this option is selected (max 100 characters). */
   value: Value & CheckMinLength<Value, 1, 'value'> & CheckMaxLength<Value, 100, 'value'>;
+  /** The user-facing label text of the option (max 100 characters). */
   label: Label & CheckMaxLength<Label, 100, 'label'>;
+  /** An optional description displayed under the label (max 100 characters). */
   description?: Description & CheckMaxLength<Description, 100, 'description'>;
+  /** Whether this radio choice starts selected by default. */
   default?: boolean;
 }
 
+/**
+ * Config options for a new RadioGroupBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Options The radio option builders array.
+ */
 export interface RadioGroupOptions<
   CustomId extends string = string,
   Options extends readonly RadioGroupOptionBuilder[] = readonly RadioGroupOptionBuilder[],
 > {
+  /** The list of radio choices (2-10 options allowed). */
   options: readonly [...Options];
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
 type GetRadioOptions<Opts> = Opts extends { options: infer O } ? (O extends readonly unknown[] ? O : never) : never;
 
+/**
+ * Type-level validation for RadioGroupOptions.
+ * @template Opts The user configuration options object.
+ */
 export type ValidateRadioGroupOptions<Opts> =
   CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
   ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
@@ -101,8 +124,8 @@ class RadioGroupOptionBuilderClass {
   }
 
       /**
-   * Creates a new RadioGroupOptionBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new RadioGroupOptionBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: RadioGroupOptionOptions<string, string, string>) {
     const val = opts.value as string | undefined;
@@ -191,6 +214,9 @@ constructor(opts: RadioGroupOptionOptions<string, string, string>) {
   }
 }
 
+/**
+ * Interface for a configured RadioGroupOptionBuilder.
+ */
 export interface RadioGroupOptionBuilderInstance
   extends RadioGroupOptionBuilderClass {}
 
@@ -206,13 +232,23 @@ export const RadioGroupOptionBuilder =
     from(data: APIRadioGroupOption): RadioGroupOptionBuilder;
   };
 
+/**
+ * Alias for RadioGroupOptionBuilderClass.
+ */
 export type RadioGroupOptionBuilder = RadioGroupOptionBuilderClass;
 
+/**
+ * Interface for a fully configured RadioGroupBuilder.
+ * @template CustomId The custom ID of the radio group.
+ * @template Options The options contained in the radio group.
+ */
 export interface RadioGroupBuilderInstance<
   CustomId extends string,
   Options extends readonly RadioGroupOptionBuilder[] = readonly RadioGroupOptionBuilder[],
 > extends RadioGroupBuilderClass {
+  /** The configured custom identifier of the radio group. */
   readonly customId: CustomId;
+  /** The radio options configured in the group. */
   readonly options: Options;
 }
 
@@ -283,8 +319,8 @@ class RadioGroupBuilderClass extends BaseComponent<Partial<APIRadioGroupComponen
   }
 
       /**
-   * Creates a new RadioGroupBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new RadioGroupBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: RadioGroupOptions<string, RadioGroupOptionBuilder[]>) {
     super();
@@ -302,9 +338,9 @@ constructor(opts: RadioGroupOptions<string, RadioGroupOptionBuilder[]>) {
   }
 
       /**
-   * Sets the custom identifier for this component (maximum of 100 characters).
-   * @param cid - The unique custom identifier.
-   * @returns This builder instance for chaining.
+   * Sets the custom ID (up to 100 chars).
+   * @param cid - Unique custom ID.
+   * @returns This builder for chaining.
    */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -420,4 +456,7 @@ export const RadioGroupBuilder = RadioGroupBuilderClass as unknown as {
   from(data: APIRadioGroupComponent): RadioGroupBuilder;
 };
 
+/**
+ * Alias for RadioGroupBuilderClass.
+ */
 export type RadioGroupBuilder = RadioGroupBuilderClass;

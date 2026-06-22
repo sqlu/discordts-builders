@@ -1,99 +1,139 @@
+/**
+ * All the Discord component types you can use.
+ */
 export const enum ComponentType {
-  // Standard horizontal container
+  /** A basic row to put buttons and other items. */
   ActionRow = 1,
-  // Clickable button component
+  /** A button users can click. */
   Button = 2,
-  // Text dropdown select menu
+  /** Classic text select menu. */
   StringSelect = 3,
-  // Text input component
+  /** A text box for modal popups. */
   TextInput = 4,
-  // User selection dropdown
+  /** Select menu for choosing users. */
   UserSelect = 5,
-  // Role selection dropdown 
+  /** Select menu for choosing roles. */
   RoleSelect = 6,
-  // Mentionable user/role selection dropdown
+  /** Select menu for users or roles. */
   MentionableSelect = 7,
-  // Channel selection dropdown 
+  /** Select menu for choosing channels. */
   ChannelSelect = 8,
-  // Section layout wrapper
+  /** A layout section to organize stuff. */
   Section = 9,
-  // Markdown text block component
+  /** Shows text, supports markdown. */
   TextDisplay = 10,
-  // Small image thumbnail accessory
+  /** Tiny image thumbnail helper. */
   Thumbnail = 11,
-  // Image/video gallery grid
+  /** Gallery for displaying images or videos. */
   MediaGallery = 12,
-  // Joint file attachment component
+  /** Inline file attachment reference. */
   File = 13,
-  // Separator divider line
+  /** A simple line divider. */
   Separator = 14,
-  // Activity feed entry component; not usable by bots.
+  /** Activity feed stuff. Don't touch, bots can't use it. */
   ContentInventoryEntry = 16,
-  // Top-level layout container wrapper
+  /** Main wrapper component. */
   Container = 17,
-  // Form input label and description wrapper
+  /** Label and description box for inputs. */
   Label = 18,
-  // File upload input element
+  /** File upload input helper. */
   FileUpload = 19,
-  // Checkpoint summary component; not usable by bots.
+  /** Not for bots. */
   CheckpointCard = 20,
-  // Radio button choice list
+  /** Radio buttons for single choice. */
   RadioGroup = 21,
-  // Checkbox multi-select list
+  /** Checkbox list for picking multiple options. */
   CheckboxGroup = 22,
-  // True/false checkbox option
+  /** A single checkbox toggle. */
   Checkbox = 23,
 }
 
+/**
+ * Styles for buttons on Discord.
+ */
 export const enum ButtonStyle {
-  // Blurple color
+  /** The blue/blurple button. */
   Primary = 1,
-  // Grey color
+  /** Gray button. */
   Secondary = 2,
-  // Green color
+  /** Green button. */
   Success = 3,
-  // Red color
+  /** Red button. */
   Danger = 4,
-  // Grey color with external link indicator
+  /** Link button (gray with link icon). */
   Link = 5,
-  // Premium payment purchase button
+  /** Purple store button. */
   Premium = 6,
 }
 
+/**
+ * TextInput styles for modals.
+ */
 export const enum TextInputStyle {
-  // Single-line text input
+  /** Single line of text. */
   Short = 1,
-  // Multi-line paragraph text input
+  /** Multi-line text area. */
   Paragraph = 2,
 }
 
+/**
+ * Spacing sizes for separator line.
+ */
 export const enum SeparatorSpacingSize {
+  /** Small space. */
   Small = 1,
+  /** Big space. */
   Large = 2,
 }
 
+/**
+ * Flags for message layout.
+ */
 export const enum MessageFlags {
+  /** Forces V2 component layout. */
   IsComponentsV2 = 1 << 15,
 }
 
+/**
+ * Channel types for filtering select menus.
+ */
 export const enum ChannelType {
+  /** Server text channel. */
   GuildText = 0,
+  /** Direct message. */
   DM = 1,
+  /** Voice channel. */
   GuildVoice = 2,
+  /** Group DM. */
   GroupDM = 3,
+  /** Channel category. */
   GuildCategory = 4,
+  /** Announcement channel. */
   GuildAnnouncement = 5,
+  /** Thread in announcement channel. */
   AnnouncementThread = 10,
+  /** Public thread. */
   PublicThread = 11,
+  /** Private thread. */
   PrivateThread = 12,
+  /** Stage channel. */
   GuildStageVoice = 13,
+  /** Directory channel. */
   GuildDirectory = 14,
+  /** Forum channel. */
   GuildForum = 15,
+  /** Media channel. */
   GuildMedia = 16,
 }
 
+/**
+ * Default values for select menus.
+ */
 export const enum SelectMenuDefaultValueType {
+  /** Default user. */
   User = 'user',
+  /** Default role. */
   Role = 'role',
+  /** Default channel. */
   Channel = 'channel',
 }

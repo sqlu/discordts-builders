@@ -52,6 +52,12 @@ export type LabelComponentBuilder =
   | MentionableSelectMenuBuilder
   | ChannelSelectMenuBuilder;
 
+/**
+ * Config options for a new LabelBuilder.
+ * @template Label The label header text.
+ * @template Component The paired interactive component.
+ * @template Description The optional helper description text.
+ */
 export interface LabelOptions<
   Label extends string = string,
   Component extends LabelComponentBuilder = LabelComponentBuilder,
@@ -65,8 +71,13 @@ export interface LabelOptions<
   description?: Description & CheckMaxLength<Description, 100, 'Description'>;
 }
 
+/**
+ * Interface for a fully configured LabelBuilder.
+ * @template Component The wrapped interactive component.
+ */
 export interface LabelBuilderInstance<Component extends LabelComponentBuilder>
   extends LabelBuilderClass {
+  /** The child component wrapped by the label. */
   readonly component: Component;
 }
 
@@ -95,10 +106,10 @@ class LabelBuilderClass extends BaseComponent<Partial<APILabelComponent>> {
   public override readonly type = ComponentType.Label;
 
   /**
-   * Recreates a {@link LabelBuilder} from a raw Discord API payload.
+   * Loads a {@link LabelBuilder} from raw Discord data.
    *
    * @param data - Raw label payload from Discord.
-   * @returns A fully hydrated `LabelBuilderClass` instance.
+   * @returns Populated `LabelBuilderClass` instance.
    */
   public static from(data: APILabelComponent): LabelBuilderClass {
     const raw = resolveRaw(data) as unknown as APILabelComponent;
@@ -137,8 +148,8 @@ class LabelBuilderClass extends BaseComponent<Partial<APILabelComponent>> {
   }
 
       /**
-   * Creates a new LabelBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new LabelBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: LabelOptions<string, LabelComponentBuilder, string>) {
     super();
@@ -196,7 +207,7 @@ constructor(opts: LabelOptions<string, LabelComponentBuilder, string>) {
       /**
    * Shortcut to set a  component for this label.
    * @param comp - The Builder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setComponent(comp: LabelComponentBuilder): this {
     const compType = comp?.type;
@@ -230,66 +241,66 @@ constructor(opts: LabelOptions<string, LabelComponentBuilder, string>) {
       /**
    * Shortcut to set a TextInput component for this label.
    * @param comp - The TextInputBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setTextInputComponent(comp: TextInputBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a Checkbox component for this label.
    * @param comp - The CheckboxBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setCheckboxComponent(comp: CheckboxBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a CheckboxGroup component for this label.
    * @param comp - The CheckboxGroupBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setCheckboxGroupComponent(comp: CheckboxGroupBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a RadioGroup component for this label.
    * @param comp - The RadioGroupBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setRadioGroupComponent(comp: RadioGroupBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a FileUpload component for this label.
    * @param comp - The FileUploadBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setFileUploadComponent(comp: FileUploadBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a StringSelectMenu component for this label.
    * @param comp - The StringSelectMenuBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setStringSelectMenuComponent(comp: StringSelectMenuBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a UserSelectMenu component for this label.
    * @param comp - The UserSelectMenuBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setUserSelectMenuComponent(comp: UserSelectMenuBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a RoleSelectMenu component for this label.
    * @param comp - The RoleSelectMenuBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setRoleSelectMenuComponent(comp: RoleSelectMenuBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a MentionableSelectMenu component for this label.
    * @param comp - The MentionableSelectMenuBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setMentionableSelectMenuComponent(comp: MentionableSelectMenuBuilder): this { return this.setComponent(comp); }
       /**
    * Shortcut to set a ChannelSelectMenu component for this label.
    * @param comp - The ChannelSelectMenuBuilder instance.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setChannelSelectMenuComponent(comp: ChannelSelectMenuBuilder): this { return this.setComponent(comp); }
 
   /**
-   * Serializes this label to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    *
    * @returns The JSON representation.
    */
@@ -319,4 +330,7 @@ export const LabelBuilder = LabelBuilderClass as unknown as {
   from(data: APILabelComponent): LabelBuilder;
 };
 
+/**
+ * Alias for LabelBuilderClass.
+ */
 export type LabelBuilder = LabelBuilderClass;

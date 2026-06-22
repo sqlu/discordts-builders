@@ -154,9 +154,9 @@ abstract class BaseSelectMenuBuilderClass<
   }
 
       /**
-   * Sets the custom identifier for this component (maximum of 100 characters).
-   * @param cid - The unique custom identifier.
-   * @returns This builder instance for chaining.
+   * Sets the custom ID (up to 100 chars).
+   * @param cid - Unique custom ID.
+   * @returns This builder for chaining.
    */
   setCustomId(cid: CheckMinLength<string, 1, 'customId'> & CheckMaxLength<string, 100, 'customId'>): this {
     this.validateCustomId(cid);
@@ -223,15 +223,26 @@ abstract class BaseSelectMenuBuilderClass<
   }
 }
 
+/**
+ * Compile-time validated select menu option interface.
+ * @template Label The option label text string literal.
+ * @template Value The option value string literal.
+ * @template Description The optional option description string literal.
+ */
 export interface TypeSafeSelectMenuOption<
   Label extends string = string,
   Value extends string = string,
   Description extends string = string,
 > {
+  /** The option label text (1-100 characters). */
   label: Label & CheckMinLength<Label, 1, 'label'> & CheckMaxLength<Label, 100, 'label'>;
+  /** The value returned when this option is selected (1-100 characters). */
   value: Value & CheckMinLength<Value, 1, 'value'> & CheckMaxLength<Value, 100, 'value'>;
+  /** Optional description text displayed under the label (max 100 characters). */
   description?: Description & CheckMaxLength<Description, 100, 'description'>;
+  /** Optional emoji displayed next to the option text. */
   emoji?: APIMessageComponentEmoji;
+  /** Whether this option starts pre-selected by default. */
   default?: boolean;
 }
 
@@ -299,8 +310,8 @@ class StringSelectMenuOptionBuilderClass {
   }
 
       /**
-   * Creates a new StringSelectMenuOptionBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new StringSelectMenuOptionBuilder.
+   * @param opts - Config options.
    */
 constructor(opts?: TypeSafeSelectMenuOption<string, string, string>) {
     if (!opts) return;
@@ -402,6 +413,9 @@ constructor(opts?: TypeSafeSelectMenuOption<string, string, string>) {
   }
 }
 
+/**
+ * Interface for a configured StringSelectMenuOptionBuilder.
+ */
 export interface StringSelectMenuOptionBuilderInstance
   extends StringSelectMenuOptionBuilderClass {}
 
@@ -416,9 +430,21 @@ export const StringSelectMenuOptionBuilder =
     ): StringSelectMenuOptionBuilderInstance;
     from(data: APISelectMenuOption): StringSelectMenuOptionBuilder;
   };
+
+/**
+ * Alias for StringSelectMenuOptionBuilderClass.
+ */
 export type StringSelectMenuOptionBuilder =
   StringSelectMenuOptionBuilderClass;
 
+/**
+ * Config options for a new StringSelectMenuBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Placeholder The placeholder text string literal.
+ * @template Options The options contained in the select menu.
+ * @template MinValues The minimum selected options range.
+ * @template MaxValues The maximum selected options range.
+ */
 export interface StringSelectMenuOptions<
   CustomId extends string = string,
   Placeholder extends string = string,
@@ -429,15 +455,25 @@ export interface StringSelectMenuOptions<
   MinValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
   MaxValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
 > {
+  /** The list of selectable choices (1-25 options allowed). */
   options: readonly [...Options];
+  /** Placeholder text when nothing is selected (up to 150 chars). */
   placeholder?: Placeholder;
+  /** Min checked options required (0 to 25). */
   minValues?: MinValues;
+  /** Alias for minValues. */
   min_values?: MinValues;
+  /** Max checked options allowed (1 to 25). */
   maxValues?: MaxValues;
+  /** Alias for maxValues. */
   max_values?: MaxValues;
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Disable the select menu? */
   disabled?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
@@ -466,6 +502,11 @@ type ValidateSelectValues<Opts> =
   ? unknown
   : { readonly error: 'minValues cannot be greater than maxValues' };
 
+/**
+ * Validates the generic parameters of generic SelectMenuOptions at compile-time.
+ * @template Opts The user configuration options.
+ * @template Name Field name for errors.
+ */
 export type ValidateSelectMenuOptions<Opts, Name extends string = 'SelectMenu'> =
   CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'> extends { readonly error: string }
   ? CheckStringConstraints<GetCustomIdField<Opts>, 1, 100, 'customId'>
@@ -479,6 +520,10 @@ export type ValidateSelectMenuOptions<Opts, Name extends string = 'SelectMenu'> 
       : ValidateSelectValues<Opts>)
   : { readonly error: `${Name} requires a customId or custom_id property` };
 
+/**
+ * Type-level validation for StringSelectMenuOptions.
+ * @template Opts The user configuration options.
+ */
 export type ValidateStringSelectMenuOptions<Opts> =
   ValidateSelectMenuOptions<Opts, 'StringSelectMenu'> extends { readonly error: string }
   ? ValidateSelectMenuOptions<Opts, 'StringSelectMenu'>
@@ -488,6 +533,11 @@ export type ValidateStringSelectMenuOptions<Opts> =
   ? CheckArrayLength<GetStringSelectOptions<Opts>, 1, 25, 'options'>
   : unknown;
 
+/**
+ * Interface for a fully configured StringSelectMenuBuilder.
+ * @template CustomId The custom ID of the select menu.
+ * @template Options The options contained in the select menu.
+ */
 export interface StringSelectMenuBuilderInstance<
   CustomId extends string,
   Options extends readonly (
@@ -495,7 +545,9 @@ export interface StringSelectMenuBuilderInstance<
     | StringSelectMenuOptionBuilder
   )[] = readonly (TypeSafeSelectMenuOption | StringSelectMenuOptionBuilder)[],
 > extends StringSelectMenuBuilderClass {
+  /** Custom ID of this select menu. */
   readonly customId: CustomId;
+  /** The options configured in the select menu. */
   readonly options: Options;
 }
 
@@ -706,15 +758,26 @@ export const StringSelectMenuBuilder =
   };
 export type StringSelectMenuBuilder = StringSelectMenuBuilderClass;
 
+/**
+ * Base options for auto-populated select menus.
+ * @template Placeholder The placeholder text string literal.
+ */
 export interface BaseAutoSelectMenuOptions<
   Placeholder extends string = string,
 > {
+  /** Placeholder text when nothing is selected (up to 150 chars). */
   placeholder?: Placeholder;
+  /** Min checked options required (0 to 25). */
   minValues?: AllowedSelectMenuRange;
+  /** Alias for minValues. */
   min_values?: AllowedSelectMenuRange;
+  /** Max checked options allowed (1 to 25). */
   maxValues?: AllowedSelectMenuRange;
+  /** Alias for maxValues. */
   max_values?: AllowedSelectMenuRange;
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Disable the select menu? */
   disabled?: boolean;
 }
 
@@ -751,7 +814,7 @@ abstract class BaseAutoSelectMenuBuilderClass<
    * Sets the minimum number of selected choices required (between 0 and 25).
    * Overrides to revalidate default values.
    * @param min - The minimum values count to set.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
 override setMinValues(min: number): this {
     super.setMinValues(min);
@@ -770,7 +833,7 @@ override setMinValues(min: number): this {
    * Sets the maximum number of selected choices allowed (between 1 and 25).
    * Overrides to revalidate default values.
    * @param max - The maximum values count to set.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
 override setMaxValues(max: number): this {
     super.setMaxValues(max);
@@ -825,25 +888,46 @@ override setMaxValues(max: number): this {
   }
 }
 
+/**
+ * Config options for a new UserSelectMenuBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Placeholder The placeholder text string literal.
+ * @template MinValues The minimum selected options range.
+ * @template MaxValues The maximum selected options range.
+ */
 export interface UserSelectMenuOptions<
   CustomId extends string = string,
   Placeholder extends string = string,
   MinValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
   MaxValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
 > {
+  /** Placeholder when empty (up to 150 chars). */
   placeholder?: Placeholder;
+  /** Min checked options required (0 to 25). */
   minValues?: MinValues;
+  /** Alias for minValues. */
   min_values?: MinValues;
+  /** Max checked options allowed (1 to 25). */
   maxValues?: MaxValues;
+  /** Alias for maxValues. */
   max_values?: MaxValues;
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Disable the select menu? */
   disabled?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
+/**
+ * Interface for a configured UserSelectMenuBuilder.
+ * @template CustomId The custom ID of the select menu.
+ */
 export interface UserSelectMenuBuilderInstance<CustomId extends string>
   extends UserSelectMenuBuilderClass {
+  /** Custom ID of this select menu. */
   readonly customId: CustomId;
 }
 
@@ -993,25 +1077,46 @@ export const UserSelectMenuBuilder = UserSelectMenuBuilderClass as unknown as {
 };
 export type UserSelectMenuBuilder = UserSelectMenuBuilderClass;
 
+/**
+ * Config options for a new RoleSelectMenuBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Placeholder The placeholder text string literal.
+ * @template MinValues The minimum selected options range.
+ * @template MaxValues The maximum selected options range.
+ */
 export interface RoleSelectMenuOptions<
   CustomId extends string = string,
   Placeholder extends string = string,
   MinValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
   MaxValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
 > {
+  /** Placeholder when empty (up to 150 chars). */
   placeholder?: Placeholder;
+  /** Min checked options required (0 to 25). */
   minValues?: MinValues;
+  /** Alias for minValues. */
   min_values?: MinValues;
+  /** Max checked options allowed (1 to 25). */
   maxValues?: MaxValues;
+  /** Alias for maxValues. */
   max_values?: MaxValues;
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Disable the select menu? */
   disabled?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
+/**
+ * Interface for a configured RoleSelectMenuBuilder.
+ * @template CustomId The custom ID of the select menu.
+ */
 export interface RoleSelectMenuBuilderInstance<CustomId extends string>
   extends RoleSelectMenuBuilderClass {
+  /** Custom ID of this select menu. */
   readonly customId: CustomId;
 }
 
@@ -1121,7 +1226,7 @@ class RoleSelectMenuBuilderClass extends BaseAutoSelectMenuBuilderClass<Partial<
   /**
    * Appends roles to the list of default pre-selected roles.
    * @param roles - Role IDs or pre-selected role value objects to add.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   addDefaultRoles(...roles: readonly (string | { id: string; type?: SelectMenuDefaultValueType | (string & {}) })[]): this {
     const len = roles.length;
@@ -1160,25 +1265,46 @@ export const RoleSelectMenuBuilder = RoleSelectMenuBuilderClass as unknown as {
 };
 export type RoleSelectMenuBuilder = RoleSelectMenuBuilderClass;
 
+/**
+ * Config options for a new MentionableSelectMenuBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Placeholder The placeholder text string literal.
+ * @template MinValues The minimum selected options range.
+ * @template MaxValues The maximum selected options range.
+ */
 export interface MentionableSelectMenuOptions<
   CustomId extends string = string,
   Placeholder extends string = string,
   MinValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
   MaxValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
 > {
+  /** Placeholder when empty (up to 150 chars). */
   placeholder?: Placeholder;
+  /** Min checked options required (0 to 25). */
   minValues?: MinValues;
+  /** Alias for minValues. */
   min_values?: MinValues;
+  /** Max checked options allowed (1 to 25). */
   maxValues?: MaxValues;
+  /** Alias for maxValues. */
   max_values?: MaxValues;
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Disable the select menu? */
   disabled?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
+/**
+ * Interface for a configured MentionableSelectMenuBuilder.
+ * @template CustomId The custom ID of the select menu.
+ */
 export interface MentionableSelectMenuBuilderInstance<CustomId extends string>
   extends MentionableSelectMenuBuilderClass {
+  /** Custom ID of this select menu. */
   readonly customId: CustomId;
 }
 
@@ -1305,7 +1431,7 @@ class MentionableSelectMenuBuilderClass extends BaseAutoSelectMenuBuilderClass<P
       /**
    * Appends users to the list of default pre-selected mentionables.
    * @param users - User IDs or pre-selected user value objects to add.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   addDefaultUsers(...users: readonly (string | { id: string })[]): this {
     const len = users.length;
@@ -1324,7 +1450,7 @@ class MentionableSelectMenuBuilderClass extends BaseAutoSelectMenuBuilderClass<P
       /**
    * Appends roles to the list of default pre-selected roles.
    * @param roles - Role IDs or pre-selected role value objects to add.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   addDefaultRoles(...roles: readonly (string | { id: string })[]): this {
     const len = roles.length;
@@ -1364,27 +1490,50 @@ export const MentionableSelectMenuBuilder =
   };
 export type MentionableSelectMenuBuilder = MentionableSelectMenuBuilderClass;
 
+/**
+ * Config options for a new ChannelSelectMenuBuilder.
+ * @template CustomId The custom ID string literal.
+ * @template Placeholder The placeholder text string literal.
+ * @template MinValues The minimum selected options range.
+ * @template MaxValues The maximum selected options range.
+ */
 export interface ChannelSelectMenuOptions<
   CustomId extends string = string,
   Placeholder extends string = string,
   MinValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
   MaxValues extends AllowedSelectMenuRange = AllowedSelectMenuRange,
 > {
+  /** Allowed channel types for selection. */
   channelTypes?: ChannelType[];
+  /** Alias for channelTypes. */
   channel_types?: ChannelType[];
+  /** Placeholder when empty (up to 150 chars). */
   placeholder?: Placeholder;
+  /** Min checked options required (0 to 25). */
   minValues?: MinValues;
+  /** Alias for minValues. */
   min_values?: MinValues;
+  /** Max checked options allowed (1 to 25). */
   maxValues?: MaxValues;
+  /** Alias for maxValues. */
   max_values?: MaxValues;
+  /** Is selection required? Defaults to true. */
   required?: boolean;
+  /** Disable the select menu? */
   disabled?: boolean;
+  /** Custom ID sent on submit (up to 100 chars). */
   customId?: CustomId;
+  /** Alias for customId. */
   custom_id?: CustomId;
 }
 
+/**
+ * Interface for a configured ChannelSelectMenuBuilder.
+ * @template CustomId The custom ID of the select menu.
+ */
 export interface ChannelSelectMenuBuilderInstance<CustomId extends string>
   extends ChannelSelectMenuBuilderClass {
+  /** Custom ID of this select menu. */
   readonly customId: CustomId;
 }
 
@@ -1497,7 +1646,7 @@ class ChannelSelectMenuBuilderClass extends BaseAutoSelectMenuBuilderClass<Parti
       /**
    * Adds allowed channel types to filter the channel list.
    * @param channelTypes - The channel types to allow.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   addChannelTypes(...channelTypes: readonly ChannelType[]): this {
     if (!Array.isArray(this.data.channel_types))
@@ -1509,7 +1658,7 @@ class ChannelSelectMenuBuilderClass extends BaseAutoSelectMenuBuilderClass<Parti
         /**
    * Sets the default pre-selected channels for this select menu (up to 25 entries).
    * @param channels - Channel IDs or pre-selected channel value objects.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   setDefaultChannels(channels: readonly (string | { id: string; type?: SelectMenuDefaultValueType | (string & {}) })[]): this {
     const vals = channels.map((c) => ({
@@ -1529,7 +1678,7 @@ class ChannelSelectMenuBuilderClass extends BaseAutoSelectMenuBuilderClass<Parti
       /**
    * Appends channels to the list of default pre-selected channels.
    * @param channels - Channel IDs or pre-selected channel value objects to add.
-   * @returns This builder instance for chaining.
+   * @returns This builder for chaining.
    */
   addDefaultChannels(...channels: readonly (string | { id: string; type?: SelectMenuDefaultValueType | (string & {}) })[]): this {
     this.addDefaultValuesRaw(

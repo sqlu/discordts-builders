@@ -3,11 +3,18 @@ import type { APITextDisplayComponent } from '../types.ts';
 import type { CheckMaxLength, CheckMinLength } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new TextDisplayBuilder.
+ * @template Content The markdown content string literal.
+ */
 export interface TextDisplayOptions<Content extends string = string> {
   /** The markdown content to display (1–4000 characters). */
   content: Content & CheckMinLength<Content, 1, 'content'> & CheckMaxLength<Content, 4000, 'content'>;
 }
 
+/**
+ * Interface for a built TextDisplayBuilder.
+ */
 export interface TextDisplayBuilderInstance extends TextDisplayBuilderClass {}
 
 /**
@@ -28,10 +35,10 @@ class TextDisplayBuilderClass extends BaseComponent<Partial<APITextDisplayCompon
   public override readonly type = ComponentType.TextDisplay;
 
   /**
-   * Recreates a {@link TextDisplayBuilder} from a raw Discord API payload.
+   * Loads a {@link TextDisplayBuilder} from raw Discord data.
    *
    * @param data - Raw text display payload from Discord.
-   * @returns A fully hydrated `TextDisplayBuilderClass` instance.
+   * @returns Populated `TextDisplayBuilderClass` instance.
    */
   public static from(data: APITextDisplayComponent): TextDisplayBuilderClass {
     const raw = resolveRaw(data) as unknown as APITextDisplayComponent;
@@ -49,8 +56,8 @@ class TextDisplayBuilderClass extends BaseComponent<Partial<APITextDisplayCompon
   }
 
   /**
-   * Creates a new TextDisplayBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new TextDisplayBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: TextDisplayOptions<string>) {
     super();
@@ -73,7 +80,7 @@ constructor(opts: TextDisplayOptions<string>) {
   }
 
   /**
-   * Serializes this text display to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    * @returns The JSON representation.
    */
   override toJSON(): APITextDisplayComponent {
@@ -89,4 +96,7 @@ export const TextDisplayBuilder = TextDisplayBuilderClass as unknown as {
   from(data: APITextDisplayComponent): TextDisplayBuilder;
 };
 
+/**
+ * Alias for TextDisplayBuilderClass.
+ */
 export type TextDisplayBuilder = TextDisplayBuilderClass;

@@ -3,6 +3,9 @@ import type { APIFileComponent } from '../types.ts';
 import type { CheckAttachmentUrl, CheckMaxLength } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new FileBuilder.
+ */
 export interface FileOptions {
   /** The file URL - **must** use the `attachment://` scheme. */
   url: string;
@@ -10,6 +13,10 @@ export interface FileOptions {
   spoiler?: boolean;
 }
 
+/**
+ * Type-level validation for FileOptions.
+ * @template Url The attachment URL string literal.
+ */
 export type ValidateFileOptions<Url extends string> =
   CheckAttachmentUrl<Url> extends { readonly error: string }
   ? CheckAttachmentUrl<Url>
@@ -17,6 +24,9 @@ export type ValidateFileOptions<Url extends string> =
   ? CheckMaxLength<Url, 512, 'url'>
   : unknown;
 
+/**
+ * Interface for a fully configured FileBuilder.
+ */
 export interface FileBuilderInstance extends FileBuilderClass {}
 
 /**
@@ -37,10 +47,10 @@ class FileBuilderClass extends BaseComponent<Partial<APIFileComponent>> {
   public override readonly type = ComponentType.File;
 
   /**
-   * Recreates a {@link FileBuilder} from a raw Discord API payload.
+   * Loads a {@link FileBuilder} from raw Discord data.
    *
    * @param data - Raw file component payload from Discord.
-   * @returns A fully hydrated `FileBuilderClass` instance.
+   * @returns Populated `FileBuilderClass` instance.
    */
   public static from(data: APIFileComponent): FileBuilderClass {
     const raw = resolveRaw(data) as unknown as APIFileComponent & { url?: string };
@@ -67,8 +77,8 @@ class FileBuilderClass extends BaseComponent<Partial<APIFileComponent>> {
   }
 
       /**
-   * Creates a new FileBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new FileBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: FileOptions) {
     super();
@@ -125,4 +135,7 @@ export const FileBuilder = FileBuilderClass as unknown as {
   from(data: APIFileComponent): FileBuilder;
 };
 
+/**
+ * Alias for FileBuilderClass.
+ */
 export type FileBuilder = FileBuilderClass;

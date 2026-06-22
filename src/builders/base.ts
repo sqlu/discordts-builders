@@ -3,69 +3,64 @@ import type { APIComponent, JSONifiable } from '../types.ts';
 
 const AUDIT_TEXT_FIELDS = ['content', 'label', 'description', 'placeholder', 'value', 'title'] as const;
 
-const limitsState = {
-  count: 0,
-  textLen: 0,
-};
-
-function scanTreeLimits(c: unknown): void {
+function scanTreeLimits(c: unknown, state: { count: number; textLen: number }): void {
   if (!c) return;
 
   const payload = (typeof c === 'object' && c !== null && typeof (c as JSONifiable).toJSON === 'function')
     ? (c as JSONifiable).toJSON() as Record<string, unknown>
     : (c as Record<string, unknown>);
 
-  if (typeof payload.type === 'number') limitsState.count++;
+  if (typeof payload.type === 'number') state.count++;
 
-  if (typeof payload.content === 'string') limitsState.textLen += payload.content.length;
-  if (typeof payload.label === 'string') limitsState.textLen += payload.label.length;
-  if (typeof payload.description === 'string') limitsState.textLen += payload.description.length;
-  if (typeof payload.placeholder === 'string') limitsState.textLen += payload.placeholder.length;
-  if (typeof payload.value === 'string') limitsState.textLen += payload.value.length;
-  if (typeof payload.title === 'string') limitsState.textLen += payload.title.length;
+  if (typeof payload.content === 'string') state.textLen += payload.content.length;
+  if (typeof payload.label === 'string') state.textLen += payload.label.length;
+  if (typeof payload.description === 'string') state.textLen += payload.description.length;
+  if (typeof payload.placeholder === 'string') state.textLen += payload.placeholder.length;
+  if (typeof payload.value === 'string') state.textLen += payload.value.length;
+  if (typeof payload.title === 'string') state.textLen += payload.title.length;
 
   const comps = payload.components;
   if (Array.isArray(comps)) {
     const len = comps.length;
-    for (let i = 0; i < len; i++) scanTreeLimits(comps[i]);
+    for (let i = 0; i < len; i++) scanTreeLimits(comps[i], state);
   }
   const comp = payload.component;
   if (comp != null && typeof comp === 'object') {
-    scanTreeLimits(comp);
+    scanTreeLimits(comp, state);
   }
   const opts = payload.options;
   if (Array.isArray(opts)) {
     const len = opts.length;
-    for (let i = 0; i < len; i++) scanTreeLimits(opts[i]);
+    for (let i = 0; i < len; i++) scanTreeLimits(opts[i], state);
   }
   const items = payload.items;
   if (Array.isArray(items)) {
     const len = items.length;
-    for (let i = 0; i < len; i++) scanTreeLimits(items[i]);
+    for (let i = 0; i < len; i++) scanTreeLimits(items[i], state);
   }
   const acc = payload.accessory;
   if (acc != null && typeof acc === 'object') {
-    scanTreeLimits(acc);
+    scanTreeLimits(acc, state);
   }
   const f = payload.file;
   if (f != null && typeof f === 'object') {
-    scanTreeLimits(f);
+    scanTreeLimits(f, state);
   }
   const m = payload.media;
   if (m != null && typeof m === 'object') {
-    scanTreeLimits(m);
+    scanTreeLimits(m, state);
   }
   const files = payload.files;
   if (Array.isArray(files)) {
     const len = files.length;
-    for (let i = 0; i < len; i++) scanTreeLimits(files[i]);
+    for (let i = 0; i < len; i++) scanTreeLimits(files[i], state);
   }
 }
 
 
 /**
- * Base component class for all builders.
- * Manages the component type, optional database/Discord ID, and payload serialization.
+ * Base class for all component builders.
+ * Handles component type, optional database/Discord ID, and payload serialization.
  * 
  * @template TData The shape of the raw API component payload.
  */
@@ -84,12 +79,12 @@ export abstract class BaseComponent<
   public abstract readonly type: ComponentType;
 
   /**
-   * The database or Discord identifier for this component.
+   * Database or Discord ID for this component.
    */
   public id?: number;
 
   /**
-   * The raw API payload object containing all data properties.
+   * Raw API payload with all data properties.
    */
   public readonly data: TData;
 
@@ -134,18 +129,18 @@ export abstract class BaseComponent<
   }
 
   /**
-   * Serializes the builder into the raw API JSON structure expected by Discord.
+   * Serializes the builder to the raw API JSON structure for Discord.
    * 
-   * @returns The serialized component payload.
+   * @returns Serialized component payload.
    */
   abstract toJSON(): unknown;
 
   /**
-   * Asserts that a string length does not exceed a maximum limit.
-   * @param str The string to validate.
-   * @param max The maximum allowed length.
-   * @param name The name of the field for error messages.
-   * @throws Error if string exceeds maximum length.
+   * Checks if string length doesn't exceed maximum.
+   * @param str String to validate.
+   * @param max Max allowed length.
+   * @param name Field name for errors.
+   * @throws Throws if string is too long.
    */
   protected validateLength(str: string | undefined, max: number, name: string): void {
     if (str !== undefined && str.length > max) {
@@ -154,10 +149,10 @@ export abstract class BaseComponent<
   }
 
   /**
-   * Asserts that a string meets a minimum length requirement.
-   * @param str The string to validate.
-   * @param min The minimum required length.
-   * @param name The name of the field for error messages.
+   * Checks if string meets minimum length.
+   * @param str String to validate.
+   * @param min Min required length.
+   * @param name Field name for errors.
    * @throws Error if string is below minimum length.
    */
   protected validateMinLength(str: string, min: number, name: string): void {
@@ -167,12 +162,12 @@ export abstract class BaseComponent<
   }
 
   /**
-   * Asserts that a numeric value is within an inclusive [min, max] range.
-   * @param val The value to validate.
-   * @param min The minimum allowed value.
-   * @param max The maximum allowed value.
-   * @param name The name of the field for error messages.
-   * @throws Error if value is outside the range.
+   * Checks if a number is in a [min, max] range.
+   * @param val Value to validate.
+   * @param min Min allowed value.
+   * @param max Max allowed value.
+   * @param name Field name for errors.
+   * @throws Throws if value is out of range.
    */
   protected validateRange(val: number, min: number, max: number, name: string): void {
     if (val < min || val > max) {
@@ -181,12 +176,12 @@ export abstract class BaseComponent<
   }
 
   /**
-   * Asserts that an array length is within an inclusive [min, max] range.
-   * @param arr The array to validate.
-   * @param min The minimum required elements.
-   * @param max The maximum allowed elements.
-   * @param name The name of the field for error messages.
-   * @throws Error if array length is outside the range.
+   * Checks if array length is in a [min, max] range.
+   * @param arr Array to validate.
+   * @param min Min elements required.
+   * @param max Max elements allowed.
+   * @param name Field name for errors.
+   * @throws Throws if array size is out of range.
    */
   protected validateArrayLength(arr: readonly unknown[], min: number, max: number, name: string): void {
     if (arr.length < min || arr.length > max) {
@@ -195,10 +190,10 @@ export abstract class BaseComponent<
   }
 
   /**
-   * Asserts that a URL uses a valid http or https protocol.
-   * @param url The URL to validate.
-   * @param name The name of the field for error messages.
-   * @throws Error if URL is not http/https.
+   * Checks if URL has a valid http/https protocol.
+   * @param url URL to validate.
+   * @param name Field name for errors.
+   * @throws Throws if URL isn't http/https.
    */
   protected validateHttpUrl(url: string, name: string): void {
     if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('discord://')) {
@@ -207,10 +202,10 @@ export abstract class BaseComponent<
   }
 
   /**
-   * Asserts that a Discord custom_id is within the required 1-100 character range.
-   * @param customId The custom identifier to validate.
-   * @param name The name of the field for error messages.
-   * @throws Error if customId is outside 1-100 character range.
+   * Checks if a Discord custom_id is 1-100 characters.
+   * @param customId Custom ID to validate.
+   * @param name Field name for errors.
+   * @throws Throws if customId length is invalid.
    */
   protected validateCustomId(customId: string, name = 'customId'): void {
     const len = customId.length;
@@ -223,54 +218,53 @@ export abstract class BaseComponent<
   }
 
   /**
-* Validates that the total size and depth constraints of a component tree are within Discord's official limits.
-* Checks that the total component count does not exceed 40 and total text lengths do not exceed 4000 characters.
-* @param root - The root component builder or payload structure to validate.
-* @throws If the component layout or text sizes exceed Discord limits.
+* Checks if component tree size and depth are within Discord limits.
+* Verifies total components <= 40 and total text <= 4000 chars.
+* @param root - Root component or payload to validate.
+* @throws Throws if layout or text sizes exceed limits.
 */
   public static validateTreeLimits(root: unknown): void {
-    limitsState.count = 0;
-    limitsState.textLen = 0;
+    const state = { count: 0, textLen: 0 };
 
-    scanTreeLimits(root);
+    scanTreeLimits(root, state);
 
-    if (limitsState.count > 40) {
-      throw new Error(`too many components, discord limit is 40 but got ${limitsState.count}`);
+    if (state.count > 40) {
+      throw new Error(`too many components, discord limit is 40 but got ${state.count}`);
     }
-    if (limitsState.textLen > 4000) {
-      throw new Error(`total text is too long, max 4000 characters but got ${limitsState.textLen}`);
+    if (state.textLen > 4000) {
+      throw new Error(`total text is too long, max 4000 characters but got ${state.textLen}`);
     }
   }
   /**
-* Audits a component tree structure and returns a list of warnings or errors for any Discord limit violations.
-* Does not throw; returns a list of warning strings or issue objects.
-* @param root - The root component builder or payload to check.
-* @param options - Configuration options for the audit.
-* @returns An array of warning strings or structured issue objects.
+* Audits component tree and returns warnings/errors for limit violations.
+* Doesn't throw, just returns warnings or issues.
+* @param root - Root component or payload to check.
+* @param options - Audit configuration options.
+* @returns Warnings or structured issues.
 */
   public static auditTree(root: unknown, options: { structured: true; context?: 'message' | 'modal' }): AuditIssue[];
   /**
-* Audits a component tree structure and returns a list of warnings or errors for any Discord limit violations.
-* Does not throw; returns a list of warning strings or issue objects.
-* @param root - The root component builder or payload to check.
-* @param options - Configuration options for the audit.
-* @returns An array of warning strings or structured issue objects.
+* Audits component tree and returns warnings/errors for limit violations.
+* Doesn't throw, just returns warnings or issues.
+* @param root - Root component or payload to check.
+* @param options - Audit configuration options.
+* @returns Warnings or structured issues.
 */
   public static auditTree(root: unknown, options?: { structured?: false; context?: 'message' | 'modal' }): string[];
   /**
-* Audits a component tree structure and returns a list of warnings or errors for any Discord limit violations.
-* Does not throw; returns a list of warning strings or issue objects.
-* @param root - The root component builder or payload to check.
-* @param options - Configuration options for the audit.
-* @returns An array of warning strings or structured issue objects.
+* Audits component tree and returns warnings/errors for limit violations.
+* Doesn't throw, just returns warnings or issues.
+* @param root - Root component or payload to check.
+* @param options - Audit configuration options.
+* @returns Warnings or structured issues.
 */
   public static auditTree(root: unknown, options?: { structured?: boolean; context?: 'message' | 'modal' }): (string | AuditIssue)[];
   /**
-* Audits a component tree structure and returns a list of warnings or errors for any Discord limit violations.
-* Does not throw; returns a list of warning strings or issue objects.
-* @param root - The root component builder or payload to check.
-* @param options - Configuration options for the audit.
-* @returns An array of warning strings or structured issue objects.
+* Audits component tree and returns warnings/errors for limit violations.
+* Doesn't throw, just returns warnings or issues.
+* @param root - Root component or payload to check.
+* @param options - Audit configuration options.
+* @returns Warnings or structured issues.
 */
   public static auditTree(root: unknown, options?: { structured?: boolean; context?: 'message' | 'modal' }): (string | AuditIssue)[] {
     const issues: AuditIssue[] = [];
@@ -1023,10 +1017,10 @@ export abstract class BaseComponent<
 
 
   /**
-   * Creates a deep copy of this component builder instance.
-   * Useful for reusing layout configurations or duplicating buttons/inputs with minor modifications.
+   * Creates a deep copy of this builder.
+   * Good for reusing layouts or copying buttons/inputs with small tweaks.
    * 
-   * @returns A cloned builder instance of the same class type.
+   * @returns Cloned builder instance.
    * 
    * @example
    * ```ts
@@ -1044,10 +1038,10 @@ export abstract class BaseComponent<
 
 // Shared helper for from() in classes that do not inherit from BaseComponent
 /**
-* Resolves a raw Discord API component payload from a builder instance or raw object.
-* If the input has a toJSON method, it calls it to resolve the payload.
-* @param data - The component data payload or builder to resolve.
-* @returns The resolved raw API payload.
+* Resolves raw Discord component payload from a builder or raw object.
+* Calls toJSON if available to resolve the payload.
+* @param data - Component payload or builder to resolve.
+* @returns Resolved raw API payload.
 */
 export function resolveRaw(data: unknown): Record<string, unknown> {
   if (data && typeof data === 'object' && 'toJSON' in data && typeof (data as { toJSON: unknown }).toJSON === 'function')

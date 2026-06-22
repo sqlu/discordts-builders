@@ -3,15 +3,23 @@ import type { APIMediaGalleryComponent, APIMediaGalleryItem } from '../types.ts'
 import type { CheckArrayLength, CheckMediaUrl, CheckMaxLength } from '../utils/guards.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new MediaGalleryItemBuilder.
+ */
 export interface MediaGalleryItemOptions {
   /** Media URL - `http://`, `https://`, or `attachment://` scheme. */
   url: string;
-  /** Alt text description for accessibility (max 1024 characters). */
+  /** Alt description text (up to 1024 chars). */
   description?: string;
   /** Whether to blur the item behind a spoiler overlay. */
   spoiler?: boolean;
 }
 
+/**
+ * Type-level validation for MediaGalleryItemOptions.
+ * @template Url The media URL string literal.
+ * @template Description The description string literal.
+ */
 export type ValidateMediaGalleryItemOptions<Url extends string, Description extends string = string> =
   CheckMediaUrl<Url> extends { readonly error: string }
   ? CheckMediaUrl<Url>
@@ -33,10 +41,10 @@ class MediaGalleryItemBuilderClass {
   public data: Partial<APIMediaGalleryItem> = {};
 
   /**
-   * Recreates a {@link MediaGalleryItemBuilder} from a raw Discord API payload.
+   * Loads a {@link MediaGalleryItemBuilder} from raw Discord data.
    *
    * @param data - Raw media gallery item payload.
-   * @returns A fully hydrated `MediaGalleryItemBuilderClass` instance.
+   * @returns Populated `MediaGalleryItemBuilderClass` instance.
    */
   public static from(data: APIMediaGalleryItem): MediaGalleryItemBuilderClass {
     const raw = resolveRaw(data) as unknown as APIMediaGalleryItem & { url?: string };
@@ -71,8 +79,8 @@ class MediaGalleryItemBuilderClass {
   }
 
   /**
-* Creates a new MediaGalleryItemBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new MediaGalleryItemBuilder.
+* @param opts - Config options.
 */
   constructor(opts: MediaGalleryItemOptions) {
     if (opts.url !== undefined) this.setURL(opts.url);
@@ -129,7 +137,7 @@ class MediaGalleryItemBuilderClass {
   }
 
   /**
-   * Serializes this item to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    *
    * @returns The JSON representation.
    * @throws If no URL has been set.
@@ -140,6 +148,9 @@ class MediaGalleryItemBuilderClass {
   }
 }
 
+/**
+ * Interface for a configured MediaGalleryItemBuilderClass.
+ */
 export interface MediaGalleryItemBuilderInstance extends MediaGalleryItemBuilderClass { }
 
 export const MediaGalleryItemBuilder = MediaGalleryItemBuilderClass as unknown as {
@@ -154,8 +165,15 @@ export const MediaGalleryItemBuilder = MediaGalleryItemBuilderClass as unknown a
   ): MediaGalleryItemBuilderInstance;
   from(data: APIMediaGalleryItem): MediaGalleryItemBuilder;
 };
+/**
+ * Alias for MediaGalleryItemBuilderClass.
+ */
 export type MediaGalleryItemBuilder = MediaGalleryItemBuilderClass;
 
+/**
+ * Config options for a new MediaGalleryBuilder.
+ * @template Items The array type of MediaGalleryItemBuilder.
+ */
 export interface MediaGalleryOptions<
   Items extends readonly MediaGalleryItemBuilder[] = MediaGalleryItemBuilder[],
 > {
@@ -163,9 +181,14 @@ export interface MediaGalleryOptions<
   items: readonly [...Items] & CheckArrayLength<Items, 1, 10, 'items'>;
 }
 
+/**
+ * Interface for a fully configured MediaGalleryBuilder.
+ * @template Items The items contained in the gallery.
+ */
 export interface MediaGalleryBuilderInstance<
   Items extends readonly MediaGalleryItemBuilder[] = readonly MediaGalleryItemBuilder[],
 > extends MediaGalleryBuilderClass {
+  /** The child items configured in the gallery. */
   readonly items: Items;
 }
 
@@ -192,10 +215,10 @@ class MediaGalleryBuilderClass extends BaseComponent<Partial<APIMediaGalleryComp
   public override readonly type = ComponentType.MediaGallery;
 
   /**
-   * Recreates a {@link MediaGalleryBuilder} from a raw Discord API payload.
+   * Loads a {@link MediaGalleryBuilder} from raw Discord data.
    *
    * @param data - Raw media gallery payload from Discord.
-   * @returns A fully hydrated `MediaGalleryBuilderClass` instance.
+   * @returns Populated `MediaGalleryBuilderClass` instance.
    */
   public static from(data: APIMediaGalleryComponent): MediaGalleryBuilderClass {
     const raw = resolveRaw(data) as unknown as APIMediaGalleryComponent;
@@ -214,8 +237,8 @@ class MediaGalleryBuilderClass extends BaseComponent<Partial<APIMediaGalleryComp
   }
 
   /**
-* Creates a new MediaGalleryBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new MediaGalleryBuilder.
+* @param opts - Config options.
 */
   constructor(opts: MediaGalleryOptions<MediaGalleryItemBuilderClass[]>) {
     super();
@@ -303,4 +326,7 @@ export const MediaGalleryBuilder = MediaGalleryBuilderClass as unknown as {
   from(data: APIMediaGalleryComponent): MediaGalleryBuilder;
 };
 
+/**
+ * Alias for MediaGalleryBuilderClass.
+ */
 export type MediaGalleryBuilder = MediaGalleryBuilderClass;

@@ -6,18 +6,32 @@ import type { TextDisplayBuilder } from './TextDisplayBuilder.ts';
 import type { ButtonBuilder } from './ButtonBuilder.ts';
 import type { ThumbnailBuilder } from './ThumbnailBuilder.ts';
 
+/**
+ * Valid components that can be used as a Section accessory.
+ */
 export type SectionAccessory = ButtonBuilder | ThumbnailBuilder;
 
+/**
+ * Config options for a new SectionBuilder.
+ * @template Components The array of TextDisplayBuilder components.
+ */
 export interface SectionOptions<
   Components extends readonly TextDisplayBuilder[] = TextDisplayBuilder[],
 > {
+  /** The child text displays grouped inside the section. */
   components: Components & CheckArrayLength<Components, 1, 3, 'components'>;
+  /** An optional accessory displayed on the right side of the section. */
   accessory?: SectionAccessory;
 }
 
+/**
+ * Interface for a fully configured SectionBuilder.
+ * @template Components The components contained in the section.
+ */
 export interface SectionBuilderInstance<
   Components extends readonly TextDisplayBuilder[] = readonly TextDisplayBuilder[],
 > extends SectionBuilderClass {
+  /** The child text displays configured in the section. */
   readonly components: Components;
 }
 
@@ -43,10 +57,10 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
   public override readonly type = ComponentType.Section;
 
   /**
-   * Recreates a {@link SectionBuilder} from a raw Discord API payload.
+   * Loads a {@link SectionBuilder} from raw Discord data.
    *
    * @param data - Raw section payload from Discord.
-   * @returns A fully hydrated `SectionBuilderClass` instance.
+   * @returns Populated `SectionBuilderClass` instance.
    *
    * @see {@link https://discord.com/developers/docs/components/reference#section-section-structure Discord Docs}
    */
@@ -76,8 +90,8 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
   }
 
   /**
-* Creates a new SectionBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new SectionBuilder.
+* @param opts - Config options.
 */
   constructor(opts: SectionOptions<TextDisplayBuilder[]>) {
     super();
@@ -146,14 +160,14 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
   /**
 * Sets the section accessory as a button component.
 * @param button - The ButtonBuilder instance.
-* @returns This builder instance for chaining.
+* @returns This builder for chaining.
 */
   setButtonAccessory(button: ButtonBuilder): this { return this.setAccessory(button); }
 
   /**
 * Sets the section accessory as a thumbnail image.
 * @param thumbnail - The ThumbnailBuilder instance.
-* @returns This builder instance for chaining.
+* @returns This builder for chaining.
 */
   setThumbnailAccessory(thumbnail: ThumbnailBuilder): this { return this.setAccessory(thumbnail); }
 
@@ -167,7 +181,7 @@ class SectionBuilderClass extends BaseComponent<Partial<APISectionComponent>> {
   }
 
   /**
-   * Serializes this section to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    *
    * @returns The JSON representation.
    * @throws If there are no text display components.
@@ -199,4 +213,7 @@ export const SectionBuilder = SectionBuilderClass as unknown as {
   from(data: APISectionComponent): SectionBuilder;
 };
 
+/**
+ * Alias for SectionBuilderClass.
+ */
 export type SectionBuilder = SectionBuilderClass;

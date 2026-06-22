@@ -49,15 +49,15 @@ const registry = {
 } as unknown as Record<number, { from(data: unknown): BaseComponent }>;
 
 /**
- * Factory for creating component builders from raw API payloads.
- * Resolves component types and instantiates appropriate builder classes.
+ * Creates component builders from raw API payloads.
+ * Resolves component types and loads the right builder class.
  */
 export class ComponentFactory {
   /**
    * Creates a component builder from a raw API payload.
-   * @param data Raw component data payload
-   * @returns The appropriate builder instance
-   * @throws If data is null, missing type, or has unsupported component type
+   * @param data Raw component data.
+   * @returns The builder instance.
+   * @throws If payload is empty, has no type, or isn't supported.
    */
   public static from(data: APIComponent | Record<string, unknown>): BaseComponent {
     if (!data) throw new Error('data is null or undefined');

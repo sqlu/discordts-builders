@@ -9,6 +9,9 @@ import type {
   ChannelSelectMenuBuilder,
 } from './SelectMenuBuilders.ts';
 
+/**
+ * Represents any valid select menu builder type.
+ */
 type AnySelectMenu =
   | StringSelectMenuBuilder
   | UserSelectMenuBuilder
@@ -16,6 +19,9 @@ type AnySelectMenu =
   | MentionableSelectMenuBuilder
   | ChannelSelectMenuBuilder;
 
+/**
+ * Valid components that can be laid out by the SmartLayoutBuilder.
+ */
 type LayoutComponent = ButtonBuilder | AnySelectMenu;
 
 const SELECT_TYPES = new Set<ComponentType>([

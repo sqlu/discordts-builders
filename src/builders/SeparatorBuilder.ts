@@ -2,6 +2,9 @@ import { ComponentType, SeparatorSpacingSize } from '../enums.ts';
 import type { APISeparatorComponent } from '../types.ts';
 import { BaseComponent, resolveRaw } from './base.ts';
 
+/**
+ * Config options for a new SeparatorBuilder.
+ */
 export interface SeparatorOptions {
   /** Whether to render a visible horizontal line. Defaults to true if unset. */
   divider?: boolean;
@@ -9,6 +12,9 @@ export interface SeparatorOptions {
   spacing?: SeparatorSpacingSize;
 }
 
+/**
+ * Interface for a fully configured SeparatorBuilder.
+ */
 export interface SeparatorBuilderInstance extends SeparatorBuilderClass {}
 
 /**
@@ -28,10 +34,10 @@ class SeparatorBuilderClass extends BaseComponent<Partial<APISeparatorComponent>
   public override readonly type = ComponentType.Separator;
 
   /**
-   * Recreates a {@link SeparatorBuilder} from a raw Discord API payload.
+   * Loads a {@link SeparatorBuilder} from raw Discord data.
    *
    * @param data - Raw separator payload from Discord.
-   * @returns A fully hydrated `SeparatorBuilderClass` instance.
+   * @returns Populated `SeparatorBuilderClass` instance.
    */
   public static from(data: APISeparatorComponent): SeparatorBuilderClass {
     const raw = resolveRaw(data) as unknown as APISeparatorComponent;
@@ -59,8 +65,8 @@ class SeparatorBuilderClass extends BaseComponent<Partial<APISeparatorComponent>
   }
 
       /**
-   * Creates a new SeparatorBuilder instance.
-   * @param opts - Initial configuration options.
+   * Creates a new SeparatorBuilder.
+   * @param opts - Config options.
    */
 constructor(opts: SeparatorOptions = {}) {
     super();
@@ -103,7 +109,7 @@ constructor(opts: SeparatorOptions = {}) {
   }
 
   /**
-   * Serializes this separator to the raw Discord API payload.
+   * Convert to raw Discord API payload.
    * @returns The JSON representation.
    */
   override toJSON(): APISeparatorComponent {
@@ -119,4 +125,7 @@ export const SeparatorBuilder = SeparatorBuilderClass as unknown as {
   from(data: APISeparatorComponent): SeparatorBuilder;
 };
 
+/**
+ * Alias for SeparatorBuilderClass.
+ */
 export type SeparatorBuilder = SeparatorBuilderClass;

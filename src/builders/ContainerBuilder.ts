@@ -9,6 +9,9 @@ import type { SectionBuilder } from './SectionBuilder.ts';
 import type { SeparatorBuilder } from './SeparatorBuilder.ts';
 import type { TextDisplayBuilder } from './TextDisplayBuilder.ts';
 
+/**
+ * Valid layout components that can be placed inside a V2 Container.
+ */
 export type ContainerComponent =
   | ActionRowBuilder
   | FileBuilder
@@ -17,18 +20,31 @@ export type ContainerComponent =
   | SeparatorBuilder
   | TextDisplayBuilder;
 
+/**
+ * Config options for a new ContainerBuilder.
+ * @template Components The array of child components.
+ */
 export interface ContainerOptions<
   Components extends readonly ContainerComponent[] = ContainerComponent[],
 > {
+  /** The accent color of the left container border as RGB tuple [r, g, b] or integer. */
   accentColor?: RGBTuple | number;
+  /** The accent color of the left container border (alias of accentColor). */
   accent_color?: RGBTuple | number;
+  /** Whether the container's contents are blurred behind a spoiler filter. */
   spoiler?: boolean;
+  /** The child components in the container (1-10 components allowed). */
   components?: Components & CheckArrayLength<Components, 1, 10, 'components'>;
 }
 
+/**
+ * Interface for a fully configured ContainerBuilder.
+ * @template Components The components contained in the container.
+ */
 export interface ContainerBuilderInstance<
   Components extends readonly ContainerComponent[] = readonly ContainerComponent[],
 > extends ContainerBuilderClass {
+  /** The child components configured in the container. */
   readonly components: Components;
 }
 
@@ -98,8 +114,8 @@ class ContainerBuilderClass extends BaseComponent<Partial<APIContainerComponent>
   }
 
   /**
-* Creates a new ContainerBuilder instance.
-* @param opts - Initial configuration options.
+* Creates a new ContainerBuilder.
+* @param opts - Config options.
 */
   constructor(opts?: ContainerOptions<ContainerComponent[]>) {
     super();
@@ -292,4 +308,7 @@ export const ContainerBuilder = ContainerBuilderClass as unknown as {
   from(data: APIContainerComponent): ContainerBuilder;
 };
 
+/**
+ * Alias for ContainerBuilderClass.
+ */
 export type ContainerBuilder = ContainerBuilderClass;

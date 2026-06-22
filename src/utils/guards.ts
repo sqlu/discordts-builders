@@ -141,25 +141,26 @@ export type FileUploadRange =
   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 /**
- * Requires at least one of the specified object keys.
+ * Makes sure you pass at least one of the specified properties in the object.
+ * @template T The target object type.
+ * @template Keys The keys of which at least one must be required.
  */
 type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
   Pick<T, Exclude<keyof T, Keys>> &
   { [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>> }[Keys];
 
 /**
-/**
  * Requires exactly one of customId or custom_id to be present.
  */
 export type WithId<CustomId extends string = string> =
   | {
-      customId: CustomId & CheckMinLength<CustomId, 1, 'customId'> & CheckMaxLength<CustomId, 100, 'customId'>;
-      custom_id?: never;
-    }
+    customId: CustomId & CheckMinLength<CustomId, 1, 'customId'> & CheckMaxLength<CustomId, 100, 'customId'>;
+    custom_id?: never;
+  }
   | {
-      custom_id: CustomId & CheckMinLength<CustomId, 1, 'custom_id'> & CheckMaxLength<CustomId, 100, 'custom_id'>;
-      customId?: never;
-    };
+    custom_id: CustomId & CheckMinLength<CustomId, 1, 'custom_id'> & CheckMaxLength<CustomId, 100, 'custom_id'>;
+    customId?: never;
+  };
 
 
 /**
@@ -231,28 +232,45 @@ export type ValidActionRowComponents<C extends readonly unknown[]> =
   : { readonly error: 'ActionRow components cannot be mixed: buttons, select menus, and text inputs must be in separate rows' };
 
 
+/**
+ * Scans the component tree and grabs any customId matching the target type.
+ * @template C The component or structure to scan.
+ * @template Type The component type to target.
+ */
 export type ExtractCustomIdsByType<C, Type extends ComponentType> =
   | (C extends { readonly customId: infer Id; readonly type: Type } ? (Id extends string ? Id : never) : never)
   | (C extends { readonly component: infer Comp } ? ExtractCustomIdsByType<Comp, Type> : never)
   | (C extends { readonly components: infer Comps }
-      ? Comps extends readonly unknown[]
-        ? ExtractCustomIdsByType<Comps[number], Type>
-        : never
-      : never)
+    ? Comps extends readonly unknown[]
+    ? ExtractCustomIdsByType<Comps[number], Type>
+    : never
+    : never)
   | (C extends { readonly accessory: infer Acc } ? ExtractCustomIdsByType<Acc, Type> : never);
 
+/**
+ * Scans the component tree and pulls out every single customId it finds.
+ * @template C The component or structure to scan.
+ */
 export type ExtractAllCustomIds<C> =
   | (C extends { readonly customId: infer Id } ? (Id extends string ? Id : never) : never)
   | (C extends { readonly component: infer Comp } ? ExtractAllCustomIds<Comp> : never)
   | (C extends { readonly components: infer Comps }
-      ? Comps extends readonly unknown[]
-        ? ExtractAllCustomIds<Comps[number]>
-        : never
-      : never)
+    ? Comps extends readonly unknown[]
+    ? ExtractAllCustomIds<Comps[number]>
+    : never
+    : never)
   | (C extends { readonly accessory: infer Acc } ? ExtractAllCustomIds<Acc> : never);
 
+/**
+ * Extracts custom IDs for buttons from a component structure.
+ * @template C The component or structure type.
+ */
 export type ExtractButtonIds<C> = ExtractCustomIdsByType<C, ComponentType.Button>;
 
+/**
+ * Extracts custom IDs for select menus from a component structure.
+ * @template C The component or structure type.
+ */
 export type ExtractSelectMenuIds<C> = ExtractCustomIdsByType<C,
   | ComponentType.StringSelect
   | ComponentType.UserSelect
@@ -261,21 +279,54 @@ export type ExtractSelectMenuIds<C> = ExtractCustomIdsByType<C,
   | ComponentType.ChannelSelect
 >;
 
+/**
+ * Pulls customIds from all text inputs in the layout.
+ * @template C The component or structure.
+ */
 export type ExtractTextInputIds<C> = ExtractCustomIdsByType<C, ComponentType.TextInput>;
+
+/**
+ * Extracts custom IDs for checkboxes from a component structure.
+ * @template C The component or structure type.
+ */
 export type ExtractCheckboxIds<C> = ExtractCustomIdsByType<C, ComponentType.Checkbox>;
+
+/**
+ * Pulls customIds from all checkboxes in the layout.
+ * @template C The component or structure.
+ */
 export type ExtractCheckboxGroupIds<C> = ExtractCustomIdsByType<C, ComponentType.CheckboxGroup>;
+
+/**
+ * Extracts custom IDs for radio groups from a component structure.
+ * @template C The component or structure type.
+ */
 export type ExtractRadioGroupIds<C> = ExtractCustomIdsByType<C, ComponentType.RadioGroup>;
+
+/**
+ * Extracts custom IDs for file uploads from a component structure.
+ * @template C The component or structure type.
+ */
 export type ExtractFileUploadIds<C> = ExtractCustomIdsByType<C, ComponentType.FileUpload>;
 
+/**
+ * Checks that the options have either customId or custom_id, but not both.
+ * @template Opts The user configuration options.
+ * @template Name The component name for error messages.
+ */
 export type ValidateIdentity<Opts, Name extends string = 'Component'> =
   [Opts] extends [never]
   ? unknown
   : Opts extends { customId: string } | { custom_id: string }
   ? (Opts extends { customId: string; custom_id: string }
-      ? { readonly error: `Cannot specify both customId and custom_id on ${Name}` }
-      : unknown)
+    ? { readonly error: `Cannot specify both customId and custom_id on ${Name}` }
+    : unknown)
   : { readonly error: `${Name} requires a customId or custom_id property` };
 
+/**
+ * Extracts the custom identifier string literal from an options object.
+ * @template Opts The configuration options.
+ */
 export type ExtractCustomId<Opts> =
   Opts extends { customId: infer Cid }
   ? (Cid extends string ? Cid : string)
@@ -283,8 +334,22 @@ export type ExtractCustomId<Opts> =
   ? (Cid extends string ? Cid : string)
   : string;
 
+/**
+ * Extracts the label string literal value.
+ * @template Opts The configuration options.
+ */
 export type GetLabel<Opts> = Opts extends { label: infer L } ? (L extends string ? L : never) : never;
+
+/**
+ * Extracts the URL string literal value.
+ * @template Opts The configuration options.
+ */
 export type GetUrl<Opts> = Opts extends { url: infer U } ? (U extends string ? U : never) : never;
+
+/**
+ * Extracts the custom ID field value type from an options object.
+ * @template Opts The configuration options.
+ */
 export type GetCustomIdField<Opts> =
   Opts extends { customId: infer C }
   ? (C extends string ? C : never)
@@ -292,28 +357,45 @@ export type GetCustomIdField<Opts> =
   ? (C extends string ? C : never)
   : never;
 
+/**
+ * Compile-time check to verify string length bounds (min/max).
+ * @template Val The target string type.
+ * @template Min The minimum length required.
+ * @template Max The maximum length allowed.
+ * @template Name The field name for errors.
+ */
 export type CheckStringConstraints<Val, Min extends number, Max extends number, Name extends string> =
   [Val] extends [never]
   ? unknown
   : CheckMinLength<Val & string, Min, Name> extends { readonly error: string }
-    ? CheckMinLength<Val & string, Min, Name>
-    : CheckMaxLength<Val & string, Max, Name> extends { readonly error: string }
-      ? CheckMaxLength<Val & string, Max, Name>
-      : unknown;
+  ? CheckMinLength<Val & string, Min, Name>
+  : CheckMaxLength<Val & string, Max, Name> extends { readonly error: string }
+  ? CheckMaxLength<Val & string, Max, Name>
+  : unknown;
 
+/**
+ * Compile-time check to verify URL format and length bounds.
+ * @template Val The target URL string type.
+ * @template Max The maximum length allowed.
+ * @template Name The field name for errors.
+ */
 export type CheckUrlConstraints<Val, Max extends number, Name extends string> =
   [Val] extends [never]
   ? unknown
   : CheckUrl<Val & string> extends { readonly error: string }
-    ? CheckUrl<Val & string>
-    : CheckMaxLength<Val & string, Max, Name> extends { readonly error: string }
-      ? CheckMaxLength<Val & string, Max, Name>
-      : unknown;
+  ? CheckUrl<Val & string>
+  : CheckMaxLength<Val & string, Max, Name> extends { readonly error: string }
+  ? CheckMaxLength<Val & string, Max, Name>
+  : unknown;
 
+/**
+ * Validates that minValues is only 0 when the menu isn't required.
+ * @template Opts The configuration options.
+ */
 export type ValidateSelectMenuRequired<Opts> =
   Opts extends { minValues: 0 } | { min_values: 0 }
   ? Opts extends { required: false }
-    ? unknown
-    : { readonly error: 'minValues can only be 0 if required is false' }
+  ? unknown
+  : { readonly error: 'minValues can only be 0 if required is false' }
   : unknown;
 
