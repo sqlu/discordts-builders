@@ -1,3 +1,9 @@
+if (typeof Bun === 'undefined') {
+  throw new Error(
+    '@buncord/builders requires the Bun runtime. Please run your application using "bun run".'
+  );
+}
+
 export * from './enums.ts';
 export * from './types.ts';
 
